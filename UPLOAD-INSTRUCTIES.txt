@@ -1,0 +1,15 @@
+SCHONE GITHUB-VERSIE
+
+Upload deze negen bestanden rechtstreeks in de hoofdmap van je repository:
+index.html
+styles.css
+data.js
+app.js
+map.png
+manifest.webmanifest
+sw.js
+icon-192.png
+icon-512.png
+
+Verwijder eerst de foutieve bestanden uit de repository.
+Upload géén ZIP-bestand en géén bovenliggende map.

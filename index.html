@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f2937">
+<title>Command Platform</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="data.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<header>
+  <div><h1>Command Platform</h1><p>OVD · HIN · HON · PC Logistiek</p></div>
+  <div id="clock"></div>
+</header>
+
+<nav class="quicknav">
+  <button data-target="dashboard">Dashboard</button>
+  <button data-target="map">Kaart</button>
+  <button data-target="register">Registreren</button>
+  <button data-target="timeline">Tijdlijn</button>
+  <button data-target="overview">Overzicht</button>
+</nav>
+
+<main>
+<section id="dashboard" class="stats">
+  <div class="stat"><span>Actieve eenheden</span><strong id="statActive">0</strong></div>
+  <div class="stat"><span>Personeel actief</span><strong id="statStaff">0</strong></div>
+  <div class="stat"><span>Aflossing &lt;60 min</span><strong id="statRelief60">0</strong></div>
+  <div class="stat"><span>Nog niet geregeld</span><strong id="statUnplanned">0</strong></div>
+</section>
+
+<div class="layout">
+<div class="left">
+<section id="map" class="panel">
+  <div class="panelhead"><div><h2>Werkgebied</h2><p>Klik op een post om deze te selecteren.</p></div><button id="clearMap" class="secondary">Wis selectie</button></div>
+  <div class="mapwrap">
+    <img src="map.png" alt="Kaart werkgebied">
+    <div id="markers"></div>
+  </div>
+  <div id="selectedPostInfo" class="postinfo">Geen post geselecteerd.</div>
+</section>
+
+<section id="timeline" class="panel">
+  <div class="panelhead"><div><h2>Tijdlijn inzet en aflossing</h2><p>6 uur terug en 12 uur vooruit.</p></div></div>
+  <div class="timelinewrap"><div id="timeline"></div></div>
+</section>
+</div>
+
+<div class="right">
+<section id="register" class="panel sticky">
+  <h2>Nieuwe inzet registreren</h2>
+  <div class="steps">
+    <button class="step active" data-step="1">1 Eenheid</button>
+    <button class="step" data-step="2">2 Inzet</button>
+    <button class="step" data-step="3">3 Aflossing</button>
+    <button class="step" data-step="4">4 Controleren</button>
+  </div>
+
+  <form id="unitForm">
+    <div class="stepPane active" data-pane="1">
+      <h3>Herkomst en eenheid</h3>
+      <div class="sourcegrid">
+        <label><input type="radio" name="source" value="VGGM" checked> VGGM</label>
+        <label><input type="radio" name="source" value="VR"> Andere veiligheidsregio</label>
+        <label><input type="radio" name="source" value="OTHER"> Overige organisatie</label>
+      </div>
+
+      <div id="vggmFields" class="grid">
+        <label>Gebied<select id="area"></select></label>
+        <label>Post<select id="post"></select></label>
+        <label class="full">Voertuig<select id="vehicle"></select></label>
+        <label>Type<input id="vehicleType" readonly></label>
+        <label>Taak<select id="task"></select></label>
+        <label>Kazernecode<input id="stationCode" readonly></label>
+        <label>Bezetting<input id="crew" type="number" min="0" value="6"></label>
+      </div>
+
+      <div id="vrFields" class="grid hidden">
+        <label>Veiligheidsregio<select id="vrCode"></select></label>
+        <label>Post / standplaats<input id="vrPost"></label>
+        <label>Roepnummer / eenheidsnaam<input id="vrCallsign"></label>
+        <label>Omschrijving<input id="vrDescription"></label>
+        <label>Type<input id="vrType" value="TS"></label>
+        <label>Bezetting<input id="vrCrew" type="number" min="0" value="6"></label>
+      </div>
+
+      <div id="otherFields" class="grid hidden">
+        <label>Organisatie<select id="otherOrg">
+          <option value="">Kies organisatie</option><option>Defensie</option><option>Rijkswaterstaat</option><option>Politie</option><option>Ambulance/GHOR</option><option>USAR.NL</option><option>Waterschap</option><option>Gemeente</option><option>Netbeheerder</option><option>Rode Kruis</option><option>Overig</option>
+        </select></label>
+        <label>Standplaats / afdeling<input id="otherPost"></label>
+        <label>Eenheidsnaam / nummer<input id="otherCallsign"></label>
+        <label>Omschrijving<input id="otherDescription"></label>
+        <label>Type<input id="otherType"></label>
+        <label>Bezetting<input id="otherCrew" type="number" min="0" value="0"></label>
+      </div>
+      <div class="actions"><span></span><button type="button" class="primary next" data-next="2">Volgende</button></div>
+    </div>
+
+    <div class="stepPane" data-pane="2">
+      <h3>Inzetgegevens</h3>
+      <div class="grid">
+        <label>Status<select id="status"><option>Ingezet</option><option>Onderweg</option><option>Aflossing gepland</option><option>Afgelost</option><option>Beschikbaar</option></select></label>
+        <label>Start inzet<input id="startTime" type="datetime-local"></label>
+        <label>Inzetvak / locatie<input id="sector"></label>
+        <label>Bevelvoerder / contact<input id="commander"></label>
+        <label class="full">Opdracht<input id="assignment"></label>
+        <label class="full">Bijzonderheden<textarea id="notes"></textarea></label>
+      </div>
+      <div class="actions"><button type="button" class="secondary prev" data-prev="1">Terug</button><button type="button" class="primary next" data-next="3">Volgende</button></div>
+    </div>
+
+    <div class="stepPane" data-pane="3">
+      <h3>Eerste aflossing</h3>
+      <label class="toggle"><input id="planRelief" type="checkbox"> Direct een aflossing plannen</label>
+      <div id="reliefFields" class="grid hidden">
+        <label>Herkomst<select id="reliefSource"><option value="VGGM">VGGM</option><option value="VR">Andere veiligheidsregio</option><option value="OTHER">Overige organisatie</option></select></label>
+        <label>Post<select id="reliefPost"></select></label>
+        <label class="full">Aflossende eenheid<select id="reliefVehicle"></select></label>
+        <label>Extern roepnummer<input id="reliefExternal"></label>
+        <label>Aflossingsmoment<input id="reliefTime" type="datetime-local"></label>
+        <label>Soort<select id="reliefKind"><option>Bemanning</option><option>Voertuig en bemanning</option><option>Gedeeltelijke aflossing</option><option>Specialistische functie</option><option>Logistieke aflossing</option></select></label>
+        <label>Aantal personen<input id="reliefCrew" type="number" min="0" value="6"></label>
+      </div>
+      <div class="actions"><button type="button" class="secondary prev" data-prev="2">Terug</button><button type="button" class="primary next" data-next="4">Controleren</button></div>
+    </div>
+
+    <div class="stepPane" data-pane="4">
+      <h3>Controle</h3>
+      <div id="review" class="review"></div>
+      <div class="actions"><button type="button" class="secondary prev" data-prev="3">Terug</button><button type="submit" class="primary">Eenheid registreren</button></div>
+    </div>
+  </form>
+</section>
+</div>
+</div>
+
+<section id="overview" class="panel">
+  <div class="panelhead"><div><h2>Actuele inzetten</h2><p>Gegevens worden lokaal in deze browser opgeslagen.</p></div><div class="toolbar"><input id="search" placeholder="Zoeken"><button id="exportCsv" class="secondary">CSV export</button><button id="clearAll" class="danger">Alles wissen</button></div></div>
+  <div id="cards" class="cards"></div>
+</section>
+
+<section class="panel">
+  <h2>Wijzigingslogboek</h2>
+  <div id="log"></div>
+</section>
+</main>
+
+<dialog id="reliefDialog">
+  <form method="dialog" id="reliefForm">
+    <h3>Aflossingsketen</h3>
+    <input type="hidden" id="reliefUnitId">
+    <div id="reliefChain"></div>
+    <div class="grid">
+      <label>Herkomst<select id="chainSource"><option value="VGGM">VGGM</option><option value="VR">Andere veiligheidsregio</option><option value="OTHER">Overige organisatie</option></select></label>
+      <label>Post<select id="chainPost"></select></label>
+      <label class="full">Aflossende eenheid<select id="chainVehicle"></select></label>
+      <label>Extern roepnummer<input id="chainExternal"></label>
+      <label>Tijd<input id="chainTime" type="datetime-local"></label>
+      <label>Soort<select id="chainKind"><option>Bemanning</option><option>Voertuig en bemanning</option><option>Gedeeltelijke aflossing</option><option>Specialistische functie</option><option>Logistieke aflossing</option></select></label>
+      <label>Aantal personen<input id="chainCrew" type="number" min="0" value="6"></label>
+    </div>
+    <div class="actions"><button value="cancel" class="secondary">Sluiten</button><button type="button" id="addRelief" class="primary">Toevoegen</button></div>
+  </form>
+</dialog>
+
+<footer>Testomgeving. Gebruik geen echte operationele gegevens in een openbare GitHub Pages-omgeving.</footer>
+</body>
+</html>
