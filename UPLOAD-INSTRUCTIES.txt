@@ -1,24 +1,17 @@
-COMMAND PLATFORM v25 – PC LOG
+COMMAND PLATFORM v26
 
-Upload ALLE bestanden uit deze map naar de hoofdmap van GitHub:
-index.html
-styles.css
-data.js
-app.js
-pc-log.js
-map.png
-manifest.webmanifest
-sw.js
-icon-192.png
-icon-512.png
+Upload ALLE bestanden naar de hoofdmap van de GitHub-repository.
+Bestaande bestanden mogen worden overschreven.
 
-Vervang de bestaande bestanden. Verwijder pc-log.js niet.
+Nieuw bestand:
+- version.json
 
-Na upload:
-1. Klik Commit changes.
-2. Wacht bij Actions op het groene vinkje.
-3. Open de app.
-4. Vernieuw één keer met Ctrl+F5, of sluit en heropen de app op iPad.
+Belangrijk:
+- upload ook pc-log.js
+- klik Commit changes
+- wacht bij Actions op groen vinkje
+- open de bestaande app; opnieuw installeren is niet nodig
+- klik in de app op 'Controleer update' of vernieuw met Ctrl+F5
 
-LET OP
-Dit blijft een openbare testomgeving. Gebruik alleen fictieve of geanonimiseerde gegevens.
+Deze GitHub Pages-versie blijft een openbare testomgeving.
+Gebruik geen echte operationele of persoonsgegevens.

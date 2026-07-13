@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f2937">
-<title>Command Platform v25</title>
+<title>Command Platform v26</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -15,8 +15,21 @@
 </head>
 <body>
 <header>
-  <div><h1>Command Platform v25</h1><p>OVD · HIN · HON · PC Logistiek</p></div>
-  <div id="clock"></div>
+  <div><h1>Command Platform v26</h1><p>OVD · HIN · HON · PC Logistiek</p></div>
+  <div class="header-tools">
+      <label>Werkmodus
+        <select id="roleMode">
+          <option value="ALL">Volledig</option>
+          <option value="OVD">OVD</option>
+          <option value="PCLOG">PC Log</option>
+          <option value="HIN">HIN</option>
+          <option value="HON">HON</option>
+          <option value="COPI">CoPI</option>
+        </select>
+      </label>
+      <button id="checkUpdate" class="secondary">Controleer update</button>
+      <div><strong id="versionLabel">v26.0</strong><br><span id="clock"></span></div>
+    </div>
 </header>
 
 <nav class="quicknav">
@@ -146,13 +159,13 @@
 </div>
 </div>
 
-<section id="overview" class="panel">
+<section id="overview" data-roles="ALL OVD PCLOG HIN HON COPI" class="panel">
   <div class="panelhead"><div><h2>Actuele inzetten</h2><p>Gegevens worden lokaal in deze browser opgeslagen.</p></div><div class="toolbar"><input id="search" placeholder="Zoeken"><button id="exportCsv" class="secondary">CSV export</button><button id="clearAll" class="danger">Alles wissen</button></div></div>
   <div id="cards" class="cards"></div>
 </section>
 
 
-<section id="operationalPicture" class="panel">
+<section id="operationalPicture" data-roles="ALL OVD PCLOG HIN HON COPI" class="panel">
   <div class="panelhead">
     <div>
       <h2>Operationeel beeld PC Log</h2>
@@ -190,7 +203,7 @@
   </div>
 </section>
 
-<section id="platoons" class="panel">
+<section id="platoons" data-roles="ALL PCLOG HIN HON" class="panel">
   <div class="panelhead">
     <div>
       <h2>Pelotons en logistieke status</h2>
@@ -199,9 +212,12 @@
     <button id="newPlatoon" class="primary">Nieuw peloton</button>
   </div>
   <div id="platoonCards" class="cards"></div>
+  <h3>Sectorbord</h3>
+  <p class="small">Sleep op desktop een peloton naar een andere sector. Op tablet/telefoon gebruik je de sector-keuzelijst in de pelotonskaart.</p>
+  <div id="sectorBoard" class="sector-board"></div>
 </section>
 
-<section id="logistics" class="panel">
+<section id="logistics" data-roles="ALL PCLOG HON" class="panel">
   <div class="panelhead">
     <div>
       <h2>Logistiek</h2>
@@ -253,7 +269,7 @@
   </div>
 </section>
 
-<section id="requests" class="panel">
+<section id="requests" data-roles="ALL PCLOG HON" class="panel">
   <div class="panelhead">
     <div>
       <h2>Logistieke verzoeken en taakbord</h2>
@@ -261,14 +277,17 @@
     </div>
     <button id="newRequest" class="primary">Nieuw verzoek</button>
   </div>
-  <div id="kanban" class="kanban">
+  <div id="kanban" class="kanban six">
     <div class="kancol"><h3>Nieuw</h3><div id="kan-new"></div></div>
+    <div class="kancol"><h3>Geaccepteerd</h3><div id="kan-accepted"></div></div>
     <div class="kancol"><h3>Onderweg</h3><div id="kan-transit"></div></div>
+    <div class="kancol"><h3>Ter plaatse</h3><div id="kan-arrived"></div></div>
     <div class="kancol"><h3>Uitgevoerd</h3><div id="kan-done"></div></div>
+    <div class="kancol"><h3>Geannuleerd</h3><div id="kan-cancelled"></div></div>
   </div>
 </section>
 
-<section id="copi" class="panel">
+<section id="copi" data-roles="ALL COPI OVD HON HIN" class="panel">
   <div class="panelhead">
     <div>
       <h2>CoPI-overzicht</h2>

@@ -37,8 +37,49 @@ function active(u){return ['Onderweg','Ingezet','Aflossing gepland'].includes(u.
 function hoursSince(s){return s?Math.max(0,(Date.now()-new Date(s))/3600000):0;}
 function duration(h){const m=Math.floor(h*60);return `${Math.floor(m/60)}u ${m%60}m`;}
 
+const APP_VERSION='26.0.0';
+
+function initRoleMode(){
+  const saved=localStorage.getItem('cp_role_mode')||'ALL';
+  const select=$('roleMode');
+  if(select){select.value=saved;select.onchange=()=>applyRoleMode(select.value);}
+  applyRoleMode(saved);
+  const label=$('versionLabel');if(label)label.textContent='v'+APP_VERSION;
+}
+function applyRoleMode(role){
+  localStorage.setItem('cp_role_mode',role);
+  document.querySelectorAll('[data-roles]').forEach(el=>{
+    const roles=(el.dataset.roles||'ALL').split(' ');
+    el.classList.toggle('role-hidden',role!=='ALL'&&!roles.includes(role));
+  });
+}
+function initUpdateCheck(){
+  const btn=$('checkUpdate');
+  if(!btn)return;
+  btn.onclick=async()=>{
+    btn.textContent='Controleren…';
+    try{
+      if('serviceWorker' in navigator){
+        const reg=await navigator.serviceWorker.getRegistration();
+        if(reg)await reg.update();
+      }
+      const res=await fetch('./version.json?ts='+Date.now(),{cache:'no-store'});
+      const info=await res.json();
+      if(info.version!==APP_VERSION){
+        if(confirm(`Nieuwe versie ${info.version} beschikbaar. Nu vernieuwen?`)){
+          if('caches' in window){const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)));}
+          location.reload();
+        }
+      }else alert('Je gebruikt de nieuwste versie: '+APP_VERSION);
+    }catch(e){alert('Updatecontrole kon niet worden uitgevoerd. Vernieuw de pagina handmatig.');}
+    btn.textContent='Controleer update';
+  };
+}
+
 function init(){
   $('startTime').value=nowInput();
+  initRoleMode();
+  initUpdateCheck();
   fillAreas();
   fillRegions();
   fillAllPosts();
