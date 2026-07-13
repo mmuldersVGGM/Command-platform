@@ -1,15 +1,24 @@
-SCHONE GITHUB-VERSIE
+COMMAND PLATFORM v25 – PC LOG
 
-Upload deze negen bestanden rechtstreeks in de hoofdmap van je repository:
+Upload ALLE bestanden uit deze map naar de hoofdmap van GitHub:
 index.html
 styles.css
 data.js
 app.js
+pc-log.js
 map.png
 manifest.webmanifest
 sw.js
 icon-192.png
 icon-512.png
 
-Verwijder eerst de foutieve bestanden uit de repository.
-Upload géén ZIP-bestand en géén bovenliggende map.
+Vervang de bestaande bestanden. Verwijder pc-log.js niet.
+
+Na upload:
+1. Klik Commit changes.
+2. Wacht bij Actions op het groene vinkje.
+3. Open de app.
+4. Vernieuw één keer met Ctrl+F5, of sluit en heropen de app op iPad.
+
+LET OP
+Dit blijft een openbare testomgeving. Gebruik alleen fictieve of geanonimiseerde gegevens.

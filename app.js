@@ -15,6 +15,7 @@ function save(){
 }
 function addLog(text){
   state.log.unshift({time:new Date().toISOString(),text});
+  if(window.PCLOG && typeof window.PCLOG.addDiary==='function') window.PCLOG.addDiary(text,'Automatisch');
   save();
 }
 function nowInput(){
@@ -225,7 +226,7 @@ function renderTimeline(){
     const seg=rel.map((r,i)=>{const rs=new Date(r.time).getTime(),re=i+1<rel.length?new Date(rel[i+1].time).getTime():end;return `<div class="bar relief" style="left:${Math.max(0,(rs-start)/total*100)}%;width:${Math.max(.8,(Math.min(re,end)-Math.max(rs,start))/total*100)}%">${esc(r.unit||'Extern')} · ${esc(r.kind)}</div>`}).join('');
     return `<div class="tlrow"><div class="tllabel"><strong>${esc(unitLabel(u))}</strong><br>${esc(u.status)}</div><div class="tltrack"><div class="now" style="left:${(Date.now()-start)/total*100}%"></div><div class="bar" style="left:${l}%;width:${w}%">${esc(u.callsign)}</div>${seg}</div></div>`;
   }).join('');
-  $('timeline').className='timeline'; $('timeline').innerHTML=rows||'<div class="postinfo">Nog geen actieve eenheden.</div>';
+  $('timelineRows').className='timeline'; $('timelineRows').innerHTML=rows||'<div class="postinfo">Nog geen actieve eenheden.</div>';
 }
 function renderCards(){
   const q=$('search').value.toLowerCase();
@@ -273,6 +274,7 @@ function clearAll(){
 }
 function render(){
   renderDashboard();renderMarkers();renderPostInfo();renderTimeline();renderCards();renderLog();
+  if(typeof renderPcLog==='function') renderPcLog();
 }
 
 document.addEventListener('DOMContentLoaded',init);

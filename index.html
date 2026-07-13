@@ -4,17 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f2937">
-<title>Command Platform</title>
+<title>Command Platform v25</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <script src="data.js" defer></script>
 <script src="app.js" defer></script>
+<script src="pc-log.js" defer></script>
 </head>
 <body>
 <header>
-  <div><h1>Command Platform</h1><p>OVD · HIN · HON · PC Logistiek</p></div>
+  <div><h1>Command Platform v25</h1><p>OVD · HIN · HON · PC Logistiek</p></div>
   <div id="clock"></div>
 </header>
 
@@ -24,6 +25,11 @@
   <button data-target="register">Registreren</button>
   <button data-target="timeline">Tijdlijn</button>
   <button data-target="overview">Overzicht</button>
+  <button data-target="operationalPicture">Operationeel beeld</button>
+  <button data-target="platoons">Pelotons</button>
+  <button data-target="logistics">Logistiek</button>
+  <button data-target="requests">Verzoeken</button>
+  <button data-target="copi">CoPI</button>
 </nav>
 
 <main>
@@ -47,7 +53,7 @@
 
 <section id="timeline" class="panel">
   <div class="panelhead"><div><h2>Tijdlijn inzet en aflossing</h2><p>6 uur terug en 12 uur vooruit.</p></div></div>
-  <div class="timelinewrap"><div id="timeline"></div></div>
+  <div class="timelinewrap"><div id="timelineRows"></div></div>
 </section>
 </div>
 
@@ -144,6 +150,156 @@
   <div class="panelhead"><div><h2>Actuele inzetten</h2><p>Gegevens worden lokaal in deze browser opgeslagen.</p></div><div class="toolbar"><input id="search" placeholder="Zoeken"><button id="exportCsv" class="secondary">CSV export</button><button id="clearAll" class="danger">Alles wissen</button></div></div>
   <div id="cards" class="cards"></div>
 </section>
+
+
+<section id="operationalPicture" class="panel">
+  <div class="panelhead">
+    <div>
+      <h2>Operationeel beeld PC Log</h2>
+      <p>Samengevoegd beeld van eenheden, pelotons, aflossing, restdekking en logistieke knelpunten.</p>
+    </div>
+    <button id="refreshOperational" class="secondary">Vernieuwen</button>
+  </div>
+  <div class="opgrid">
+    <div class="opcard"><span>Actieve pelotons</span><strong id="opPlatoons">0</strong></div>
+    <div class="opcard"><span>Open logistieke verzoeken</span><strong id="opRequests">0</strong></div>
+    <div class="opcard"><span>Ademlucht gemiddeld</span><strong id="opAir">100%</strong></div>
+    <div class="opcard"><span>Rehab nodig</span><strong id="opRehab">0</strong></div>
+    <div class="opcard"><span>Waterstatus kritisch</span><strong id="opWater">0</strong></div>
+    <div class="opcard"><span>Schuimstatus kritisch</span><strong id="opFoam">0</strong></div>
+  </div>
+  <div class="twocol">
+    <div>
+      <h3>Automatische meldingen</h3>
+      <div id="autoAlerts" class="alertlist"></div>
+    </div>
+    <div>
+      <h3>Scenario-overzicht</h3>
+      <div id="scenarioSummary" class="scenario-summary"></div>
+    </div>
+  </div>
+  <div class="twocol">
+    <div>
+      <h3>Restdekking per gebied</h3>
+      <div id="coverageByArea"></div>
+    </div>
+    <div>
+      <h3>Slim aflossingsadvies</h3>
+      <div id="reliefAdvice"></div>
+    </div>
+  </div>
+</section>
+
+<section id="platoons" class="panel">
+  <div class="panelhead">
+    <div>
+      <h2>Pelotons en logistieke status</h2>
+      <p>Personeel, voertuigen, ademlucht, water, schuim, voeding en rustlocatie per peloton.</p>
+    </div>
+    <button id="newPlatoon" class="primary">Nieuw peloton</button>
+  </div>
+  <div id="platoonCards" class="cards"></div>
+</section>
+
+<section id="logistics" class="panel">
+  <div class="panelhead">
+    <div>
+      <h2>Logistiek</h2>
+      <p>Ademlucht, rehabilitatie, water, schuim en materieel.</p>
+    </div>
+  </div>
+  <div class="logtabs">
+    <button class="logtab active" data-logtab="air">Ademlucht</button>
+    <button class="logtab" data-logtab="rehab">Rehab</button>
+    <button class="logtab" data-logtab="water">Water</button>
+    <button class="logtab" data-logtab="foam">Schuim</button>
+    <button class="logtab" data-logtab="equipment">Materieel</button>
+    <button class="logtab" data-logtab="map">Logistieke kaart</button>
+  </div>
+
+  <div id="logpane-air" class="logpane active">
+    <div class="panelhead compact"><h3>Ademluchtplanning</h3><button id="addAir" class="primary">Registreren</button></div>
+    <div id="airTable"></div>
+  </div>
+  <div id="logpane-rehab" class="logpane">
+    <div class="panelhead compact"><h3>Rehabilitatie</h3><button id="addRehab" class="primary">Registreren</button></div>
+    <div id="rehabTable"></div>
+  </div>
+  <div id="logpane-water" class="logpane">
+    <div class="panelhead compact"><h3>Waterlogistiek</h3><button id="addWater" class="primary">Registreren</button></div>
+    <div id="waterTable"></div>
+  </div>
+  <div id="logpane-foam" class="logpane">
+    <div class="panelhead compact"><h3>Schuimlogistiek</h3><button id="addFoam" class="primary">Registreren</button></div>
+    <div id="foamTable"></div>
+  </div>
+  <div id="logpane-equipment" class="logpane">
+    <div class="panelhead compact"><h3>Materieelstatus</h3><button id="addEquipment" class="primary">Materieel toevoegen</button></div>
+    <div id="equipmentTable"></div>
+  </div>
+  <div id="logpane-map" class="logpane">
+    <h3>Logistieke punten op kaart</h3>
+    <div class="mapwrap logistics-map">
+      <img src="map.png" alt="Kaart werkgebied">
+      <div id="logisticsMarkers"></div>
+    </div>
+    <div class="legendline">
+      <span><i class="logmarker water"></i>Water</span>
+      <span><i class="logmarker foam"></i>Schuim</span>
+      <span><i class="logmarker rehab"></i>Rehab</span>
+      <span><i class="logmarker air"></i>Ademlucht</span>
+      <span><i class="logmarker equipment"></i>Materieel</span>
+    </div>
+  </div>
+</section>
+
+<section id="requests" class="panel">
+  <div class="panelhead">
+    <div>
+      <h2>Logistieke verzoeken en taakbord</h2>
+      <p>Nieuwe aanvraag → onderweg → uitgevoerd.</p>
+    </div>
+    <button id="newRequest" class="primary">Nieuw verzoek</button>
+  </div>
+  <div id="kanban" class="kanban">
+    <div class="kancol"><h3>Nieuw</h3><div id="kan-new"></div></div>
+    <div class="kancol"><h3>Onderweg</h3><div id="kan-transit"></div></div>
+    <div class="kancol"><h3>Uitgevoerd</h3><div id="kan-done"></div></div>
+  </div>
+</section>
+
+<section id="copi" class="panel">
+  <div class="panelhead">
+    <div>
+      <h2>CoPI-overzicht</h2>
+      <p>Actiepunten, besluiten en automatisch dagboek.</p>
+    </div>
+  </div>
+  <div class="twocol">
+    <div>
+      <div class="panelhead compact"><h3>Actiepunten</h3><button id="newAction" class="primary">Nieuw</button></div>
+      <div id="copiActions"></div>
+    </div>
+    <div>
+      <div class="panelhead compact"><h3>Besluiten</h3><button id="newDecision" class="primary">Nieuw</button></div>
+      <div id="copiDecisions"></div>
+    </div>
+  </div>
+  <h3>Automatisch dagboek</h3>
+  <div id="pcDiary" class="diary"></div>
+</section>
+
+<dialog id="pcLogDialog">
+  <form method="dialog" id="pcLogForm">
+    <h3 id="pcDialogTitle">Registreren</h3>
+    <input type="hidden" id="pcDialogType">
+    <div id="pcDialogFields" class="grid"></div>
+    <div class="actions">
+      <button value="cancel" class="secondary">Annuleren</button>
+      <button type="button" id="savePcDialog" class="primary">Opslaan</button>
+    </div>
+  </form>
+</dialog>
 
 <section class="panel">
   <h2>Wijzigingslogboek</h2>
