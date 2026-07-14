@@ -37,7 +37,7 @@ function active(u){return ['Onderweg','Ingezet','Aflossing gepland'].includes(u.
 function hoursSince(s){return s?Math.max(0,(Date.now()-new Date(s))/3600000):0;}
 function duration(h){const m=Math.floor(h*60);return `${Math.floor(m/60)}u ${m%60}m`;}
 
-const APP_VERSION='28.0.0';
+const APP_VERSION='29.0.0';
 
 function initRoleMode(){
   const saved=localStorage.getItem('cp_role_mode')||'ALL';
@@ -81,6 +81,7 @@ function init(){
   initRoleMode();
   initUpdateCheck();
   fillAreas();
+  initDeploymentPlatoonChoices();
   fillRegions();
   fillAllPosts();
   bind();
@@ -96,6 +97,8 @@ function bind(){
   document.querySelectorAll('.next').forEach(b=>b.onclick=()=>{const n=Number(b.dataset.next); if(validateStep(n-1)) goStep(n);});
   document.querySelectorAll('.prev').forEach(b=>b.onclick=()=>goStep(Number(b.dataset.prev)));
   document.querySelectorAll('input[name="source"]').forEach(r=>r.onchange=toggleSource);
+  document.querySelectorAll('input[name="deploymentMode"]').forEach(r=>r.onchange=toggleDeploymentMode);
+  $('deploymentPlatoonNumber').onchange=syncDeploymentPlatoonType;
   $('area').onchange=fillPosts;
   $('post').onchange=()=>{fillVehicles();fillTasks();selectPost($('post').value);};
   $('vehicle').onchange=applyVehicle;
@@ -111,6 +114,31 @@ function bind(){
   $('clearMap').onclick=()=>{state.selectedPost='';$('post').value='';renderMarkers();renderPostInfo();};
   $('addRelief').onclick=addRelief;
 }
+
+
+function deploymentMode(){
+  return document.querySelector('input[name="deploymentMode"]:checked')?.value || 'LOOSE';
+}
+function initDeploymentPlatoonChoices(){
+  if(window.PCLOG && typeof window.PCLOG.populateDeploymentPlatoons==='function'){
+    window.PCLOG.populateDeploymentPlatoons();
+  }
+  toggleDeploymentMode();
+}
+function toggleDeploymentMode(){
+  const show=deploymentMode()==='PLATOON';
+  $('deploymentPlatoonFields')?.classList.toggle('hidden',!show);
+  if(show && window.PCLOG && typeof window.PCLOG.populateDeploymentPlatoons==='function'){
+    window.PCLOG.populateDeploymentPlatoons();
+  }
+}
+function syncDeploymentPlatoonType(){
+  if(window.PCLOG && typeof window.PCLOG.getPlatoonByNumber==='function'){
+    const p=window.PCLOG.getPlatoonByNumber($('deploymentPlatoonNumber').value);
+    $('deploymentPlatoonType').value=p ? p.platoonType : '';
+  }
+}
+window.toggleDeploymentMode=toggleDeploymentMode;
 
 function fillAreas(){
   $('area').innerHTML='<option value="">Kies gebied</option>'+Object.keys(AREAS).map(a=>`<option>${a}</option>`).join('');
@@ -179,6 +207,7 @@ function goStep(n){
 }
 function validateStep(n){
   if(n===1){
+    if(deploymentMode()==='PLATOON' && !$('deploymentPlatoonNumber').value){alert('Kies een pelotonnummer.');return false;}
     if(source()==='VGGM' && (!$('post').value||!$('vehicle').value)){alert('Kies een post en voertuig.');return false;}
     if(source()==='VR' && (!$('vrCode').value||!$('vrPost').value||!$('vrCallsign').value)){alert('Vul veiligheidsregio, post en roepnummer in.');return false;}
     if(source()==='OTHER' && (!$('otherOrg').value||!$('otherCallsign').value)){alert('Vul organisatie en eenheidsnaam in.');return false;}
@@ -204,7 +233,8 @@ function firstRelief(){
 }
 function renderReview(){
   const i=identity(); const r=firstRelief()[0];
-  const rows=[['Herkomst',i.sourceCode],['Eenheid',unitLabel(i)],['Bezetting',i.crew],['Status',$('status').value],['Start',$('startTime').value?new Date($('startTime').value).toLocaleString('nl-NL'):''],['Inzetvak',$('sector').value],['Opdracht',$('assignment').value],['Aflossing',r?`${r.unit||'Extern'} om ${new Date(r.time).toLocaleString('nl-NL')}`:'Nog niet gepland']];
+  const platoonText=deploymentMode()==='PLATOON' ? `Peloton ${$('deploymentPlatoonNumber').value} • ${$('deploymentPlatoonType').value}` : 'Losse eenheid';
+  const rows=[['Registratie',platoonText],['Herkomst',i.sourceCode],['Eenheid',unitLabel(i)],['Bezetting',i.crew],['Status',$('status').value],['Start',$('startTime').value?new Date($('startTime').value).toLocaleString('nl-NL'):''],['Inzetvak',$('sector').value],['Opdracht',$('assignment').value],['Aflossing',r?`${r.unit||'Extern'} om ${new Date(r.time).toLocaleString('nl-NL')}`:'Nog niet gepland']];
   $('review').innerHTML=rows.map(([a,b])=>`<div><strong>${esc(a)}</strong>${esc(b)}</div>`).join('');
 }
 function submitUnit(e){
@@ -212,10 +242,21 @@ function submitUnit(e){
   if(!validateStep(1)||!validateStep(2)||!validateStep(3)) return;
   const i=identity();
   const u={id:uid(),...i,status:$('status').value,startTime:$('startTime').value,sector:$('sector').value,commander:$('commander').value,assignment:$('assignment').value,notes:$('notes').value,reliefs:firstRelief()};
-  state.units.push(u); addLog(`Eenheid geregistreerd: ${unitLabel(u)}`); save(); resetForm(); render(); goStep(1);
+  state.units.push(u);
+  if(deploymentMode()==='PLATOON' && window.PCLOG && typeof window.PCLOG.assignUnitToPlatoonNumber==='function'){
+    const result=window.PCLOG.assignUnitToPlatoonNumber(u.id,$('deploymentPlatoonNumber').value);
+    if(!result.ok){
+      state.units=state.units.filter(x=>x.id!==u.id);
+      alert(result.message||'Koppelen aan peloton is niet gelukt.');
+      return;
+    }
+  }
+  addLog(`Eenheid geregistreerd: ${unitLabel(u)}`); save(); resetForm(); render(); goStep(1);
 }
 function resetForm(){
   $('unitForm').reset(); $('startTime').value=nowInput(); toggleSource(); fillPosts(); toggle($('reliefFields'),false); $('stationCode').value='';
+  const loose=document.querySelector('input[name="deploymentMode"][value="LOOSE"]');if(loose)loose.checked=true;
+  toggleDeploymentMode();
 }
 
 function postStatus(post){

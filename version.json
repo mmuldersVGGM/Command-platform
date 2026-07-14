@@ -1,5 +1,5 @@
 {
-  "version": "28.0.0",
+  "version": "29.0.0",
   "released": "2026-07-14",
-  "notes": "Pelotons groeperen centrale eenheden; kaart, tijdlijn, status, aflossing en personeelsberekening blijven één bron."
+  "notes": "Nieuwe inzet kan direct aan peloton 100-900 worden gekoppeld. Pelotonnaam is nummer; type wordt apart gekozen."
 }

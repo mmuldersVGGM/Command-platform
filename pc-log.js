@@ -14,12 +14,12 @@ const REHAB_STATES={
   medical:['Nee','Geadviseerd','Uitgevoerd']
 };
 const PLATOON_TYPES={
-  'Brandbestrijding':{description:'Meerdere tankautospuiten voor gezamenlijke brandbestrijding.',expect:{ts:4}},
-  'Natuurbrandbestrijding':{description:'Terreinaardige eenheden voor natuurbrandbestrijding.',expect:{natureTs:4}},
-  'Watertransport':{description:'Waterwinning, transport en grootschalige watervoorziening.',expect:{water:2}},
-  'Logistiek/ondersteuning':{description:'Materieel, verzorging, brandstof en logistieke ondersteuning.',expect:{logistics:2}},
-  'IBGS':{description:'Gevaarlijke stoffen, ontsmetting en specialistische ondersteuning.',expect:{ibgs:1}},
-  'Redding/waterongevallen':{description:'Redding, hulpverlening of waterongevallen.',expect:{rescue:1}},
+  'Basispeloton':{description:'Standaard peloton voor gezamenlijke brandbestrijding.',expect:{ts:4}},
+  'Natuurbrandpeloton':{description:'Terreinaardige eenheden voor natuurbrandbestrijding.',expect:{natureTs:4}},
+  'Watertransportpeloton':{description:'Waterwinning, transport en grootschalige watervoorziening.',expect:{water:2}},
+  'Logistiek peloton':{description:'Materieel, verzorging, brandstof en logistieke ondersteuning.',expect:{logistics:2}},
+  'IBGS-peloton':{description:'Gevaarlijke stoffen, ontsmetting en specialistische ondersteuning.',expect:{ibgs:1}},
+  'Redding/waterongevallenpeloton':{description:'Redding, hulpverlening of waterongevallen.',expect:{rescue:1}},
   'Maatwerk':{description:'Vrij samen te stellen peloton.',expect:{}}
 };
 const ACTIVE_PLATOON_STATUSES=['Onderweg','Ingezet','Aflossing gepland'];
@@ -43,7 +43,21 @@ for(const k of ['platoons','air','rehab','water','foam','equipment','requests','
   if(!Array.isArray(pcState[k]))pcState[k]=[];
 }
 pcState.platoons.forEach(p=>{
+  const typeMap={
+    'Brandbestrijding':'Basispeloton',
+    'Natuurbrandbestrijding':'Natuurbrandpeloton',
+    'Watertransport':'Watertransportpeloton',
+    'Logistiek/ondersteuning':'Logistiek peloton',
+    'IBGS':'IBGS-peloton',
+    'Redding/waterongevallen':'Redding/waterongevallenpeloton'
+  };
+  if(typeMap[p.platoonType])p.platoonType=typeMap[p.platoonType];
   if(!Array.isArray(p.unitIds)) p.unitIds=[];
+  if(!p.number){
+    const m=String(p.name||'').match(/(100|200|300|400|500|600|700|800|900)/);
+    p.number=m?m[1]:'';
+  }
+  if(p.number)p.name=`Peloton ${p.number}`;
   if(!p.platoonType)p.platoonType='Maatwerk';
   if(!p.status)p.status='Ingezet';
   if(!p.startTime)p.startTime='';
@@ -64,7 +78,27 @@ function getPlatoonForUnit(unitId){
 function getExtraPlatoonPersonnel(){
   return pcState.platoons.filter(p=>ACTIVE_PLATOON_STATUSES.includes(p.status)).reduce((s,p)=>s+Number(p.extraPersonnel||0),0);
 }
-window.PCLOG={addDiary,getPlatoonForUnit,getExtraPlatoonPersonnel};
+function getPlatoonByNumber(number){return pcState.platoons.find(p=>p.number===String(number) && !['Afgelost','Beschikbaar'].includes(p.status))||null;}
+function populateDeploymentPlatoons(){
+  const sel=document.getElementById('deploymentPlatoonNumber');if(!sel)return;
+  const current=sel.value;
+  const active=pcState.platoons.filter(p=>!['Afgelost','Beschikbaar'].includes(p.status)).sort((a,b)=>Number(a.number)-Number(b.number));
+  sel.innerHTML='<option value="">Kies peloton</option>'+active.map(p=>`<option value="${pcEsc(p.number)}">Peloton ${pcEsc(p.number)} • ${pcEsc(p.platoonType)}</option>`).join('');
+  if(active.some(p=>p.number===current))sel.value=current;
+  if(typeof syncDeploymentPlatoonType==='function')syncDeploymentPlatoonType();
+}
+function assignUnitToPlatoonNumber(unitId,number){
+  const p=getPlatoonByNumber(number);
+  if(!p)return {ok:false,message:`Peloton ${number} bestaat niet of is niet actief.`};
+  const current=getPlatoonForUnit(unitId);
+  if(current&&current.id!==p.id)return {ok:false,message:`Deze eenheid is al gekoppeld aan ${current.name}.`};
+  p.unitIds=p.unitIds||[];
+  if(!p.unitIds.includes(unitId))p.unitIds.push(unitId);
+  const u=state.units.find(x=>x.id===unitId);
+  addDiary(`${unitLabel(u)} automatisch gekoppeld aan ${p.name}`,'Peloton');
+  pcSave();renderPcLog();return {ok:true};
+}
+window.PCLOG={addDiary,getPlatoonForUnit,getExtraPlatoonPersonnel,getPlatoonByNumber,populateDeploymentPlatoons,assignUnitToPlatoonNumber};
 
 function migrateOldEmbeddedVehicles(){
   let migrated=0;
@@ -115,7 +149,8 @@ function switchLogTab(name){
 
 const DIALOGS={
   newPlatoon:{title:'Peloton',type:'platoon',fields:[
-    ['name','Naam peloton','text','Peloton 1'],['platoonType','Soort peloton','select',Object.keys(PLATOON_TYPES).join('|')],
+    ['number','Pelotonnummer','select','100|200|300|400|500|600|700|800|900'],
+    ['platoonType','Soort peloton','select',Object.keys(PLATOON_TYPES).join('|')],
     ['status','Status','select','Geformeerd|Onderweg|Ingezet|Aflossing gepland|Afgelost|Beschikbaar'],
     ['startTime','Start inzet','datetime-local',''],['commander','Pelotonscommandant','text',''],
     ['extraPersonnel','Extra personeel buiten voertuigen','number','0'],
@@ -186,9 +221,19 @@ function savePcDialog(){
   const collection=editContext?editContext.collection:COLLECTION_MAP[dialogConfig.type];
   if(editContext){
     const item=pcState[collection].find(x=>x.id===editContext.id);if(!item)return;
+    if(collection==='platoons'){
+      const duplicate=pcState.platoons.find(p=>p.id!==item.id && p.number===values.number && !['Afgelost','Beschikbaar'].includes(p.status));
+      if(duplicate){alert(`Peloton ${values.number} bestaat al.`);return;}
+      values.name=`Peloton ${values.number}`;
+    }
     Object.assign(item,values,{updated:new Date().toISOString()});
     addDiary(`${dialogConfig.title} gewijzigd: ${item.name||item.unit||item.request||item.text||''}`,'Wijziging');
   }else{
+    if(collection==='platoons'){
+      const duplicate=pcState.platoons.find(p=>p.number===values.number && !['Afgelost','Beschikbaar'].includes(p.status));
+      if(duplicate){alert(`Peloton ${values.number} bestaat al.`);return;}
+      values.name=`Peloton ${values.number}`;
+    }
     const item={id:pcId(),created:new Date().toISOString(),...values};
     if(collection==='platoons')item.unitIds=[];
     pcState[collection].push(item);
@@ -201,6 +246,7 @@ window.pcEdit=(buttonId,collection,id)=>openPcDialog(buttonId,collection,id);
 function renderPcLog(){
   renderOperation();renderPlatoons();renderAir();renderRehab();renderWater();renderFoam();renderEquipment();
   renderRequests();renderCopi();renderDiary();renderLogisticsMap();
+  if(typeof populateDeploymentPlatoons==='function')populateDeploymentPlatoons();
 }
 
 function platoonUnits(p){return (p.unitIds||[]).map(id=>state.units.find(u=>u.id===id)).filter(Boolean);}

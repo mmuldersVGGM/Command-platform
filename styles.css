@@ -147,3 +147,8 @@ dialog .source-choice label{padding:8px}
   .platoon-unit-row{grid-template-columns:1fr 1fr}
   .platoon-unit-row>div:first-child{grid-column:1/-1}
 }
+
+/* v29 directe pelotonkeuze */
+.deployment-choice{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.deployment-choice label{display:flex;align-items:center;gap:7px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#f8fafc}
+.deployment-choice input{width:19px;height:19px;min-height:19px}

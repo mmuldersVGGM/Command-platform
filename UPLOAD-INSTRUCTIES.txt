@@ -1,14 +1,14 @@
-COMMAND PLATFORM v28
+COMMAND PLATFORM v29
 
-Belangrijkste wijziging:
-- Pelotons bevatten geen aparte voertuigregistraties meer.
-- Een peloton groepeert bestaande centrale eenheden.
-- Een voertuig kan maar aan één peloton tegelijk gekoppeld zijn.
-- Kaart, tijdlijn, status, bezetting en aflossingen blijven dezelfde centrale registratie gebruiken.
-- Personeel wordt één keer geteld, plus eventueel extra pelotonpersoneel.
-- Oude pelotonvoertuigen uit v27 worden bij de eerste start automatisch gemigreerd naar centrale eenheden.
+Wijzigingen:
+- Pelotons heten uitsluitend 100, 200, 300, 400, 500, 600, 700, 800 of 900.
+- Daarna wordt het soort peloton gekozen.
+- Bij Nieuwe inzet kies je direct:
+  - Losse eenheid
+  - Onderdeel van peloton
+- Bij onderdeel van peloton wordt de eenheid na registratie automatisch gekoppeld.
+- De knop 'Registreer heel peloton' is niet toegevoegd.
+- Een actief pelotonnummer kan niet dubbel worden aangemaakt.
 
-Upload ALLE bestanden naar de hoofdmap van GitHub en overschrijf de bestaande bestanden.
-Klik Commit changes, wacht op het groene vinkje bij Actions en klik daarna in de app op Controleer update.
-
-Deze openbare testomgeving blijft alleen geschikt voor fictieve/geanonimiseerde gegevens.
+Upload alle bestanden naar de hoofdmap van GitHub en overschrijf de bestaande bestanden.
+Klik Commit changes, wacht op groen vinkje bij Actions en kies daarna Controleer update.
