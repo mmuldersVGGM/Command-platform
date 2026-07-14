@@ -82,14 +82,38 @@ function getPlatoonByNumber(number){return pcState.platoons.find(p=>p.number===S
 function populateDeploymentPlatoons(){
   const sel=document.getElementById('deploymentPlatoonNumber');if(!sel)return;
   const current=sel.value;
-  const active=pcState.platoons.filter(p=>!['Afgelost','Beschikbaar'].includes(p.status)).sort((a,b)=>Number(a.number)-Number(b.number));
-  sel.innerHTML='<option value="">Kies peloton</option>'+active.map(p=>`<option value="${pcEsc(p.number)}">Peloton ${pcEsc(p.number)} • ${pcEsc(p.platoonType)}</option>`).join('');
-  if(active.some(p=>p.number===current))sel.value=current;
+  const numbers=['100','200','300','400','500','600','700','800','900'];
+  sel.innerHTML='<option value="">Kies pelotonnummer</option>'+numbers.map(number=>{
+    const p=getPlatoonByNumber(number);
+    return `<option value="${number}">Peloton ${number}${p?` • ${pcEsc(p.platoonType)} • bestaand`:' • nieuw'}</option>`;
+  }).join('');
+  if(numbers.includes(current))sel.value=current;
   if(typeof syncDeploymentPlatoonType==='function')syncDeploymentPlatoonType();
 }
-function assignUnitToPlatoonNumber(unitId,number){
-  const p=getPlatoonByNumber(number);
-  if(!p)return {ok:false,message:`Peloton ${number} bestaat niet of is niet actief.`};
+function assignUnitToPlatoonNumber(unitId,number,platoonType='Basispeloton'){
+  let p=getPlatoonByNumber(number);
+  if(!p){
+    p={
+      id:pcId(),
+      created:new Date().toISOString(),
+      number:String(number),
+      name:`Peloton ${number}`,
+      platoonType:platoonType||'Basispeloton',
+      status:'Ingezet',
+      startTime:nowInput(),
+      commander:'',
+      extraPersonnel:'0',
+      air:'100',
+      water:'100',
+      foam:'100',
+      food:'Nee',
+      rest:'Nee',
+      sector:'Onverdeeld',
+      unitIds:[]
+    };
+    pcState.platoons.push(p);
+    addDiary(`${p.name} automatisch aangemaakt als ${p.platoonType}.`,'Peloton');
+  }
   const current=getPlatoonForUnit(unitId);
   if(current&&current.id!==p.id)return {ok:false,message:`Deze eenheid is al gekoppeld aan ${current.name}.`};
   p.unitIds=p.unitIds||[];

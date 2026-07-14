@@ -37,7 +37,7 @@ function active(u){return ['Onderweg','Ingezet','Aflossing gepland'].includes(u.
 function hoursSince(s){return s?Math.max(0,(Date.now()-new Date(s))/3600000):0;}
 function duration(h){const m=Math.floor(h*60);return `${Math.floor(m/60)}u ${m%60}m`;}
 
-const APP_VERSION='29.0.0';
+const APP_VERSION='29.1.0';
 
 function initRoleMode(){
   const saved=localStorage.getItem('cp_role_mode')||'ALL';
@@ -98,7 +98,8 @@ function bind(){
   document.querySelectorAll('.prev').forEach(b=>b.onclick=()=>goStep(Number(b.dataset.prev)));
   document.querySelectorAll('input[name="source"]').forEach(r=>r.onchange=toggleSource);
   document.querySelectorAll('input[name="deploymentMode"]').forEach(r=>r.onchange=toggleDeploymentMode);
-  $('deploymentPlatoonNumber').onchange=syncDeploymentPlatoonType;
+  if($('deploymentPlatoonNumber')) $('deploymentPlatoonNumber').onchange=syncDeploymentPlatoonType;
+  if($('deploymentPlatoonType')) $('deploymentPlatoonType').onchange=updateDeploymentPlatoonInfo;
   $('area').onchange=fillPosts;
   $('post').onchange=()=>{fillVehicles();fillTasks();selectPost($('post').value);};
   $('vehicle').onchange=applyVehicle;
@@ -119,26 +120,66 @@ function bind(){
 function deploymentMode(){
   return document.querySelector('input[name="deploymentMode"]:checked')?.value || 'LOOSE';
 }
+function platoonTypesForDeployment(){
+  return ['Basispeloton','Natuurbrandpeloton','Watertransportpeloton','Logistiek peloton','IBGS-peloton','Redding/waterongevallenpeloton','Maatwerk'];
+}
 function initDeploymentPlatoonChoices(){
+  const typeSelect=$('deploymentPlatoonType');
+  if(typeSelect){
+    typeSelect.innerHTML=platoonTypesForDeployment().map(t=>`<option>${t}</option>`).join('');
+  }
   if(window.PCLOG && typeof window.PCLOG.populateDeploymentPlatoons==='function'){
     window.PCLOG.populateDeploymentPlatoons();
+  }else{
+    const select=$('deploymentPlatoonNumber');
+    if(select){
+      select.innerHTML='<option value="">Kies pelotonnummer</option>'+[100,200,300,400,500,600,700,800,900].map(n=>`<option value="${n}">Peloton ${n}</option>`).join('');
+    }
   }
   toggleDeploymentMode();
 }
 function toggleDeploymentMode(){
   const show=deploymentMode()==='PLATOON';
-  $('deploymentPlatoonFields')?.classList.toggle('hidden',!show);
+  const fields=$('deploymentPlatoonFields');
+  if(fields) fields.classList.toggle('hidden',!show);
   if(show && window.PCLOG && typeof window.PCLOG.populateDeploymentPlatoons==='function'){
     window.PCLOG.populateDeploymentPlatoons();
   }
+  updateDeploymentPlatoonInfo();
 }
 function syncDeploymentPlatoonType(){
-  if(window.PCLOG && typeof window.PCLOG.getPlatoonByNumber==='function'){
-    const p=window.PCLOG.getPlatoonByNumber($('deploymentPlatoonNumber').value);
-    $('deploymentPlatoonType').value=p ? p.platoonType : '';
+  const number=$('deploymentPlatoonNumber')?.value||'';
+  const typeEl=$('deploymentPlatoonType');
+  if(!typeEl)return;
+  const p=(window.PCLOG && typeof window.PCLOG.getPlatoonByNumber==='function')
+    ? window.PCLOG.getPlatoonByNumber(number)
+    : null;
+  if(p){
+    typeEl.value=p.platoonType;
+    typeEl.disabled=true;
+  }else{
+    typeEl.disabled=false;
+    if(!typeEl.value)typeEl.value='Basispeloton';
   }
+  updateDeploymentPlatoonInfo();
+}
+function updateDeploymentPlatoonInfo(){
+  const info=$('deploymentPlatoonInfo');
+  if(!info)return;
+  const number=$('deploymentPlatoonNumber')?.value||'';
+  if(!number){
+    info.textContent='Kies een pelotonnummer.';
+    return;
+  }
+  const p=(window.PCLOG && typeof window.PCLOG.getPlatoonByNumber==='function')
+    ? window.PCLOG.getPlatoonByNumber(number)
+    : null;
+  info.textContent=p
+    ? `De eenheid wordt gekoppeld aan Peloton ${number} • ${p.platoonType}.`
+    : `Peloton ${number} bestaat nog niet. Het wordt als ${$('deploymentPlatoonType')?.value||'Basispeloton'} aangemaakt en de eenheid wordt direct gekoppeld.`;
 }
 window.toggleDeploymentMode=toggleDeploymentMode;
+window.syncDeploymentPlatoonType=syncDeploymentPlatoonType;
 
 function fillAreas(){
   $('area').innerHTML='<option value="">Kies gebied</option>'+Object.keys(AREAS).map(a=>`<option>${a}</option>`).join('');
@@ -207,7 +248,10 @@ function goStep(n){
 }
 function validateStep(n){
   if(n===1){
-    if(deploymentMode()==='PLATOON' && !$('deploymentPlatoonNumber').value){alert('Kies een pelotonnummer.');return false;}
+    if(deploymentMode()==='PLATOON'){
+      if(!$('deploymentPlatoonNumber')?.value){alert('Kies een pelotonnummer.');return false;}
+      if(!$('deploymentPlatoonType')?.value){alert('Kies het soort peloton.');return false;}
+    }
     if(source()==='VGGM' && (!$('post').value||!$('vehicle').value)){alert('Kies een post en voertuig.');return false;}
     if(source()==='VR' && (!$('vrCode').value||!$('vrPost').value||!$('vrCallsign').value)){alert('Vul veiligheidsregio, post en roepnummer in.');return false;}
     if(source()==='OTHER' && (!$('otherOrg').value||!$('otherCallsign').value)){alert('Vul organisatie en eenheidsnaam in.');return false;}
@@ -233,7 +277,9 @@ function firstRelief(){
 }
 function renderReview(){
   const i=identity(); const r=firstRelief()[0];
-  const platoonText=deploymentMode()==='PLATOON' ? `Peloton ${$('deploymentPlatoonNumber').value} • ${$('deploymentPlatoonType').value}` : 'Losse eenheid';
+  const platoonText=deploymentMode()==='PLATOON'
+    ? `Peloton ${$('deploymentPlatoonNumber')?.value||'-'} • ${$('deploymentPlatoonType')?.value||'-'}`
+    : 'Losse eenheid';
   const rows=[['Registratie',platoonText],['Herkomst',i.sourceCode],['Eenheid',unitLabel(i)],['Bezetting',i.crew],['Status',$('status').value],['Start',$('startTime').value?new Date($('startTime').value).toLocaleString('nl-NL'):''],['Inzetvak',$('sector').value],['Opdracht',$('assignment').value],['Aflossing',r?`${r.unit||'Extern'} om ${new Date(r.time).toLocaleString('nl-NL')}`:'Nog niet gepland']];
   $('review').innerHTML=rows.map(([a,b])=>`<div><strong>${esc(a)}</strong>${esc(b)}</div>`).join('');
 }
@@ -244,7 +290,11 @@ function submitUnit(e){
   const u={id:uid(),...i,status:$('status').value,startTime:$('startTime').value,sector:$('sector').value,commander:$('commander').value,assignment:$('assignment').value,notes:$('notes').value,reliefs:firstRelief()};
   state.units.push(u);
   if(deploymentMode()==='PLATOON' && window.PCLOG && typeof window.PCLOG.assignUnitToPlatoonNumber==='function'){
-    const result=window.PCLOG.assignUnitToPlatoonNumber(u.id,$('deploymentPlatoonNumber').value);
+    const result=window.PCLOG.assignUnitToPlatoonNumber(
+      u.id,
+      $('deploymentPlatoonNumber').value,
+      $('deploymentPlatoonType').value
+    );
     if(!result.ok){
       state.units=state.units.filter(x=>x.id!==u.id);
       alert(result.message||'Koppelen aan peloton is niet gelukt.');

@@ -1,14 +1,13 @@
-COMMAND PLATFORM v29
+COMMAND PLATFORM v29.1 – HERSTELVERSIE
 
-Wijzigingen:
-- Pelotons heten uitsluitend 100, 200, 300, 400, 500, 600, 700, 800 of 900.
-- Daarna wordt het soort peloton gekozen.
-- Bij Nieuwe inzet kies je direct:
-  - Losse eenheid
-  - Onderdeel van peloton
-- Bij onderdeel van peloton wordt de eenheid na registratie automatisch gekoppeld.
-- De knop 'Registreer heel peloton' is niet toegevoegd.
-- Een actief pelotonnummer kan niet dubbel worden aangemaakt.
+Hersteld:
+- dropdownmenu's Gebied, Post, Voertuig en Taak werken weer;
+- keuze Losse eenheid / Onderdeel van peloton is zichtbaar;
+- pelotonnummer 100 t/m 900 is direct te kiezen;
+- bestaat het peloton nog niet, dan kies je het type en wordt het automatisch aangemaakt;
+- bestaat het peloton al, dan wordt het type automatisch overgenomen;
+- de geregistreerde eenheid wordt direct gekoppeld.
 
-Upload alle bestanden naar de hoofdmap van GitHub en overschrijf de bestaande bestanden.
-Klik Commit changes, wacht op groen vinkje bij Actions en kies daarna Controleer update.
+Upload ALLE bestanden naar de hoofdmap van GitHub en overschrijf de bestaande bestanden.
+Klik Commit changes, wacht op het groene vinkje bij Actions.
+Open daarna de app en gebruik Controleer update. Bij oude cache: Ctrl+F5.

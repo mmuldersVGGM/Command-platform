@@ -1,5 +1,5 @@
 {
-  "version": "29.0.0",
+  "version": "29.1.0",
   "released": "2026-07-14",
-  "notes": "Nieuwe inzet kan direct aan peloton 100-900 worden gekoppeld. Pelotonnaam is nummer; type wordt apart gekozen."
+  "notes": "Herstelde dropdowns en zichtbare pelotonkeuze bij nieuwe inzet; peloton kan direct automatisch worden aangemaakt."
 }
