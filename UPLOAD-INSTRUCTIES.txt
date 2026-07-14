@@ -1,15 +1,13 @@
-COMMAND PLATFORM v29.2 – CACHE- EN FORMULIERHERSTEL
+COMMAND PLATFORM v30
 
-Upload ALLE bestanden, inclusief:
-- reset-cache.html
+Nieuw:
+- interactieve restdekking op de kaart voor Noord, Midden, Zuidoost en Zuidwest;
+- gebieden worden groen, geel, rood of knipperend rood;
+- tik op een gebied voor beschikbare, ingezette en gekoppelde pelotoneenheden;
+- filters voor alle slagkracht, TS, hoogte, water en specialismen;
+- geen tabellen voor restdekking;
+- registratieformulier visueel vernieuwd met duidelijke stappen en veldgroepen;
+- controle op compleetheid van pelotons verwijderd.
 
-Na het groene vinkje bij Actions open je EERST:
-https://mmuldersvggm.github.io/Command-platform/reset-cache.html
-
-Klik daar op:
-'Cache wissen en nieuwste versie openen'
-
-Deze handeling verwijdert alleen tijdelijke websitecache.
-Ingevoerde lokale gegevens blijven behouden.
-
-Daarna moeten de dropdownmenu's en de keuze voor peloton zichtbaar en werkend zijn.
+Upload alle bestanden naar GitHub en overschrijf de bestaande bestanden.
+Wacht op groen vinkje bij Actions en open daarna reset-cache.html of gebruik Controleer update.

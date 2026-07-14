@@ -1,5 +1,5 @@
 {
-  "version": "29.2.0",
+  "version": "30.0.0",
   "released": "2026-07-14",
-  "notes": "Cacheherstel, netwerk-eerst laden en noodvulling van dropdownmenu's."
+  "notes": "Interactieve restdekking per gebied en visueel vernieuwd registratieformulier; compleetheidscontrole pelotons verwijderd."
 }

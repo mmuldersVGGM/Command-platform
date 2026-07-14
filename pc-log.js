@@ -15,7 +15,7 @@ const REHAB_STATES={
 };
 const PLATOON_TYPES={
   'Basispeloton':{description:'Standaard peloton voor gezamenlijke brandbestrijding.',expect:{ts:4}},
-  'Natuurbrandpeloton':{description:'Terreinaardige eenheden voor natuurbrandbestrijding.',expect:{natureTs:4}},
+  'Natuurbrandpeloton':{description:'Terreinwaardige eenheden voor natuurbrandbestrijding.',expect:{natureTs:4}},
   'Watertransportpeloton':{description:'Waterwinning, transport en grootschalige watervoorziening.',expect:{water:2}},
   'Logistiek peloton':{description:'Materieel, verzorging, brandstof en logistieke ondersteuning.',expect:{logistics:2}},
   'IBGS-peloton':{description:'Gevaarlijke stoffen, ontsmetting en specialistische ondersteuning.',expect:{ibgs:1}},
@@ -122,7 +122,13 @@ function assignUnitToPlatoonNumber(unitId,number,platoonType='Basispeloton'){
   addDiary(`${unitLabel(u)} automatisch gekoppeld aan ${p.name}`,'Peloton');
   pcSave();renderPcLog();return {ok:true};
 }
-window.PCLOG={addDiary,getPlatoonForUnit,getExtraPlatoonPersonnel,getPlatoonByNumber,populateDeploymentPlatoons,assignUnitToPlatoonNumber};
+function getPlatoonsForArea(area){
+  return pcState.platoons.map(p=>{
+    const units=platoonUnits(p).filter(u=>u.area===area || (u.post && (AREAS[area]||[]).includes(u.post)));
+    return {name:p.name,platoonType:p.platoonType,status:p.status,sector:p.sector,units:units.length};
+  }).filter(p=>p.units>0);
+}
+window.PCLOG={addDiary,getPlatoonForUnit,getExtraPlatoonPersonnel,getPlatoonByNumber,populateDeploymentPlatoons,assignUnitToPlatoonNumber,getPlatoonsForArea};
 
 function migrateOldEmbeddedVehicles(){
   let migrated=0;
@@ -343,7 +349,6 @@ function renderPlatoons(){
   document.getElementById('platoonReliefCount').textContent=pcState.platoons.reduce((s,p)=>s+platoonUnits(p).reduce((n,u)=>n+(u.reliefs||[]).length,0),0);
 
   document.getElementById('platoonCards').innerHTML=pcState.platoons.map(p=>{
-    const check=compositionCheck(p);
     const rows=platoonUnits(p).map(u=>`<div class="platoon-unit-row">
       <div><strong>${pcEsc(unitLabel(u))}</strong><span class="unit-platoon-badge">${pcEsc(p.name)}</span><div class="small">${pcEsc(u.assignment||'')} · ${(u.reliefs||[]).length} aflossing(en)</div></div>
       <div>${u.crew||0}<div class="small">personen</div></div>
@@ -354,7 +359,6 @@ function renderPlatoons(){
     return `<article class="platoon-card">
       <div class="cardhead"><div><div class="platoon-headerline"><strong>${pcEsc(p.name)}</strong><span class="platoon-type-badge">${pcEsc(p.platoonType)}</span><span class="platoon-status-badge">${pcEsc(p.status)}</span></div><div class="small">${pcEsc(p.commander)} · ${pcEsc(p.sector)} · ${platoonPersonnel(p)} personen · ${platoonActiveUnits(p).length} actieve eenheden</div></div>
       <div class="pc-actions"><button onclick="openPlatoonUnitDialog('${p.id}')">Eenheden koppelen</button><button class="edit-button" onclick="pcEdit('newPlatoon','platoons','${p.id}')">Peloton bewerken</button><button class="danger" onclick="pcRemove('platoons','${p.id}')">Verwijder</button></div></div>
-      <div class="composition-check ${check.ok?'':'warn'}">${pcEsc(PLATOON_TYPES[p.platoonType]?.description||'')}<br>${pcEsc(check.text)}</div>
       <div class="platoon-grid">
         <div class="metric"><strong>Personeel eenheden</strong>${platoonActiveUnits(p).reduce((s,u)=>s+Number(u.crew||0),0)}</div>
         <div class="metric"><strong>Extra personeel</strong>${stepper('platoons',p.id,'extraPersonnel',p.extraPersonnel,1)}</div>
