@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f2937">
-<title>Command Platform v29</title>
+<title>Command Platform v29.1</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -15,7 +15,7 @@
 </head>
 <body>
 <header>
-  <div><h1>Command Platform v29</h1><p>OVD · HIN · HON · PC Logistiek</p></div>
+  <div><h1>Command Platform v29.1</h1><p>OVD · HIN · HON · PC Logistiek</p></div>
   <div class="header-tools">
       <label>Werkmodus
         <select id="roleMode">
@@ -28,7 +28,7 @@
         </select>
       </label>
       <button id="checkUpdate" class="secondary">Controleer update</button>
-      <div><strong id="versionLabel">v29.0</strong><br><span id="clock"></span></div>
+      <div><strong id="versionLabel">v29.1</strong><br><span id="clock"></span></div>
     </div>
 </header>
 
@@ -83,6 +83,26 @@
   <form id="unitForm">
     <div class="stepPane active" data-pane="1">
       <h3>Herkomst en eenheid</h3>
+
+      <div class="deployment-choice">
+        <label><input type="radio" name="deploymentMode" value="LOOSE" checked> Losse eenheid</label>
+        <label><input type="radio" name="deploymentMode" value="PLATOON"> Onderdeel van peloton</label>
+      </div>
+
+      <div id="deploymentPlatoonFields" class="grid hidden">
+        <label>Pelotonnummer *
+          <select id="deploymentPlatoonNumber">
+            <option value="">Kies pelotonnummer</option>
+          </select>
+        </label>
+        <label>Soort peloton *
+          <select id="deploymentPlatoonType"></select>
+        </label>
+        <div id="deploymentPlatoonInfo" class="full listitem">
+          Kies een nummer. Bestaat het peloton nog niet, dan wordt het bij registratie automatisch aangemaakt.
+        </div>
+      </div>
+
       <div class="sourcegrid">
         <label><input type="radio" name="source" value="VGGM" checked> VGGM</label>
         <label><input type="radio" name="source" value="VR"> Andere veiligheidsregio</label>
