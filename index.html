@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f2937">
-<title>Command Platform v27</title>
+<title>Command Platform v28</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -15,7 +15,7 @@
 </head>
 <body>
 <header>
-  <div><h1>Command Platform v27</h1><p>OVD · HIN · HON · PC Logistiek</p></div>
+  <div><h1>Command Platform v28</h1><p>OVD · HIN · HON · PC Logistiek</p></div>
   <div class="header-tools">
       <label>Werkmodus
         <select id="roleMode">
@@ -28,7 +28,7 @@
         </select>
       </label>
       <button id="checkUpdate" class="secondary">Controleer update</button>
-      <div><strong id="versionLabel">v27.0</strong><br><span id="clock"></span></div>
+      <div><strong id="versionLabel">v28.0</strong><br><span id="clock"></span></div>
     </div>
 </header>
 
@@ -218,9 +218,6 @@
       <div><span>Aflossingen gepland</span><strong id="platoonReliefCount">0</strong></div>
     </div>
     <div id="platoonCards" class="cards"></div>
-  <h3>Sectorbord</h3>
-  <p class="small">Sleep op desktop een peloton naar een andere sector. Op tablet/telefoon gebruik je de sector-keuzelijst in de pelotonskaart.</p>
-  <div id="sectorBoard" class="sector-board"></div>
 </section>
 
 <section id="logistics" data-roles="ALL PCLOG HON" class="panel">
@@ -315,98 +312,20 @@
 </section>
 
 
-<dialog id="platoonVehicleDialog">
-  <form method="dialog" id="platoonVehicleForm">
-    <h3 id="platoonVehicleTitle">Voertuig toevoegen aan peloton</h3>
-    <input type="hidden" id="pvPlatoonId">
-    <input type="hidden" id="pvVehicleId">
-    <div class="source-choice">
-      <label><input type="radio" name="pvSource" value="VGGM" checked onchange="togglePlatoonVehicleSource()"> VGGM</label>
-      <label><input type="radio" name="pvSource" value="VR" onchange="togglePlatoonVehicleSource()"> Andere veiligheidsregio</label>
-      <label><input type="radio" name="pvSource" value="OTHER" onchange="togglePlatoonVehicleSource()"> Overige organisatie</label>
-    </div>
-    <div class="grid">
-      <label id="pvPostWrap">Post
-        <select id="pvPost" onchange="fillPlatoonVehicleOptions()"></select>
-      </label>
-      <label id="pvVehicleWrap">Voertuig
-        <select id="pvVehicle" onchange="applyPlatoonVehicleSelection()"></select>
-      </label>
-      <label id="pvExternalRegionWrap" class="hidden">Regio/organisatie
-        <input id="pvExternalRegion">
-      </label>
-      <label id="pvExternalCallsignWrap" class="hidden">Roepnummer/einheidsnaam
-        <input id="pvExternalCallsign">
-      </label>
-      <label>Voertuigtype
-        <input id="pvType">
-      </label>
-      <label>Bezetting
-        <input id="pvCrew" type="number" min="0" value="6">
-      </label>
-      <label>Status
-        <select id="pvStatus">
-          <option>Onderweg</option><option>Ingezet</option><option>Aflossing gepland</option>
-          <option>Afgelost</option><option>Beschikbaar</option>
-        </select>
-      </label>
-      <label>Start inzet
-        <input id="pvStartTime" type="datetime-local">
-      </label>
-      <label class="full">Opdracht/inzetvak
-        <input id="pvAssignment">
-      </label>
-    </div>
-    <div class="actions">
-      <button value="cancel" class="secondary">Annuleren</button>
-      <button type="button" id="savePlatoonVehicle" class="primary">Opslaan</button>
-    </div>
-  </form>
-</dialog>
 
-<dialog id="platoonReliefDialog">
+<dialog id="platoonUnitDialog">
   <form method="dialog">
-    <h3>Aflossing per voertuig</h3>
-    <input type="hidden" id="prPlatoonId">
-    <input type="hidden" id="prVehicleId">
-    <div id="platoonReliefVehicleLabel" class="listitem"></div>
-    <div class="grid">
-      <label>Herkomst
-        <select id="prSource" onchange="togglePlatoonReliefSource()">
-          <option value="VGGM">VGGM</option>
-          <option value="VR">Andere veiligheidsregio</option>
-          <option value="OTHER">Overige organisatie</option>
-        </select>
-      </label>
-      <label id="prPostWrap">Post
-        <select id="prPost" onchange="fillPlatoonReliefVehicles()"></select>
-      </label>
-      <label id="prVehicleWrap">Aflossend voertuig
-        <select id="prVehicle"></select>
-      </label>
-      <label id="prExternalWrap" class="hidden">Extern roepnummer/naam
-        <input id="prExternal">
-      </label>
-      <label>Aflossingsmoment
-        <input id="prTime" type="datetime-local">
-      </label>
-      <label>Soort aflossing
-        <select id="prKind">
-          <option>Bemanning</option>
-          <option>Voertuig en bemanning</option>
-          <option>Gedeeltelijke aflossing</option>
-          <option>Specialistische functie</option>
-        </select>
-      </label>
-      <label>Aantal personen
-        <input id="prCrew" type="number" min="0" value="6">
-      </label>
+    <h3>Eenheden aan peloton koppelen</h3>
+    <input type="hidden" id="puPlatoonId">
+    <div class="listitem">
+      Alleen bestaande eenheden worden gekoppeld. Een voertuig blijft één centrale registratie houden voor kaart, tijdlijn, status, bezetting en aflossingen.
     </div>
-    <h4>Bestaande aflossingsketen</h4>
-    <div id="platoonReliefChain" class="relief-chain"></div>
+    <label>Zoeken
+      <input id="puSearch" placeholder="Post, roepnummer, type of herkomst">
+    </label>
+    <div id="platoonAvailableUnits" class="assign-list"></div>
     <div class="actions">
       <button value="cancel" class="secondary">Sluiten</button>
-      <button type="button" id="addPlatoonRelief" class="primary">Aflossing toevoegen</button>
     </div>
   </form>
 </dialog>

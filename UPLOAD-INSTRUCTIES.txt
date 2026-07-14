@@ -1,14 +1,14 @@
-COMMAND PLATFORM v27
+COMMAND PLATFORM v28
 
-Nieuw:
-- soort peloton
-- voertuignummers per peloton
-- bezetting per voertuig
-- aflossingsketen per voertuig
-- totaal personeel = losse actieve eenheden + actieve pelotonvoertuigen + extra pelotonpersoneel
-- dubbele voertuignummers worden niet dubbel meegeteld wanneer ze zowel los als in een peloton staan
+Belangrijkste wijziging:
+- Pelotons bevatten geen aparte voertuigregistraties meer.
+- Een peloton groepeert bestaande centrale eenheden.
+- Een voertuig kan maar aan één peloton tegelijk gekoppeld zijn.
+- Kaart, tijdlijn, status, bezetting en aflossingen blijven dezelfde centrale registratie gebruiken.
+- Personeel wordt één keer geteld, plus eventueel extra pelotonpersoneel.
+- Oude pelotonvoertuigen uit v27 worden bij de eerste start automatisch gemigreerd naar centrale eenheden.
 
 Upload ALLE bestanden naar de hoofdmap van GitHub en overschrijf de bestaande bestanden.
-Klik Commit changes, wacht op het groene vinkje bij Actions en gebruik daarna 'Controleer update'.
+Klik Commit changes, wacht op het groene vinkje bij Actions en klik daarna in de app op Controleer update.
 
-Let op: deze openbare GitHub Pages-omgeving blijft uitsluitend voor fictieve/geanonimiseerde testgegevens.
+Deze openbare testomgeving blijft alleen geschikt voor fictieve/geanonimiseerde gegevens.

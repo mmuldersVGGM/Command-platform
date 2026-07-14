@@ -90,18 +90,12 @@ dialog{border:0;border-radius:13px;max-width:680px;width:min(680px,calc(100% - 2
 .value-stepper button{min-height:28px;padding:2px 8px}
 .edit-button{background:#dbeafe;color:#1d4ed8}
 .status-select{min-width:120px}
-.sector-board{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:8px;overflow-x:auto}
-.sector-column{background:#f8fafc;border:1px dashed #94a3b8;border-radius:10px;padding:8px;min-height:130px}
-.sector-column.dragover{border-color:#175cd3;background:#eff6ff}
-.sector-column h4{margin:0 0 8px}
-.sector-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px;margin-bottom:6px;font-size:11px;cursor:grab}
 .kanban.six{grid-template-columns:repeat(6,minmax(180px,1fr));overflow-x:auto}
 .history-note{font-size:10px;color:var(--muted);margin-top:4px}
 .role-hidden{display:none!important}
 @media(max-width:900px){
   .header-tools{width:100%;align-items:center}
   .header-tools label{flex:1}
-  .sector-board{grid-template-columns:repeat(5,180px)}
   .kanban.six{grid-template-columns:repeat(6,190px)}
 }
 
@@ -133,4 +127,23 @@ dialog .source-choice label{padding:8px}
 @media(max-width:600px){
   .platoon-vehicle-row{grid-template-columns:1fr 1fr}
   .platoon-vehicle-row>div:first-child{grid-column:1/-1}
+}
+
+/* v28 centrale eenheden en pelotongroepering */
+.assign-list{display:grid;gap:7px;max-height:58vh;overflow:auto;margin-top:10px}
+.assign-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:8px;background:#fff}
+.assign-row input{width:20px;height:20px;min-height:20px}
+.assign-row .meta{font-size:10px;color:var(--muted)}
+.unit-platoon-badge{display:inline-flex;padding:3px 7px;border-radius:999px;background:#f3e8ff;color:#7e22ce;font-size:10px;font-weight:700;margin-left:5px}
+.platoon-unit-row{display:grid;grid-template-columns:minmax(220px,1.5fr) 90px 110px 110px auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:8px;margin-bottom:6px;background:#fff}
+.platoon-unit-row .actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.platoon-unit-row .actions button{min-height:30px;padding:4px 7px;font-size:10px}
+.platoon-empty{padding:12px;border:1px dashed #94a3b8;border-radius:9px;background:#f8fafc;font-size:12px}
+@media(max-width:900px){
+  .platoon-unit-row{grid-template-columns:1fr 85px 100px}
+  .platoon-unit-row .actions{grid-column:1/-1;justify-content:flex-start}
+}
+@media(max-width:600px){
+  .platoon-unit-row{grid-template-columns:1fr 1fr}
+  .platoon-unit-row>div:first-child{grid-column:1/-1}
 }

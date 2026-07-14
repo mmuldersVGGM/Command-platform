@@ -37,7 +37,7 @@ function active(u){return ['Onderweg','Ingezet','Aflossing gepland'].includes(u.
 function hoursSince(s){return s?Math.max(0,(Date.now()-new Date(s))/3600000):0;}
 function duration(h){const m=Math.floor(h*60);return `${Math.floor(m/60)}u ${m%60}m`;}
 
-const APP_VERSION='27.0.0';
+const APP_VERSION='28.0.0';
 
 function initRoleMode(){
   const saved=localStorage.getItem('cp_role_mode')||'ALL';
@@ -246,29 +246,30 @@ function renderPostInfo(){
   $('selectedPostInfo').innerHTML=`<strong>${esc(p)} • ${veh.length} voertuigen</strong><div>Actief: ${activeUnits.length}</div><div class="chips">${task.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`;
 }
 
-function renderDashboard(){
-  const activeStandalone=state.units.filter(active);
-  const platoonSummary=(typeof window.getPlatoonPersonnelSummary==='function')
-    ? window.getPlatoonPersonnelSummary()
-    : {personnel:0,vehicles:0,callsigns:[]};
-  const platoonCallsigns=new Set(platoonSummary.callsigns||[]);
-  const looseUnits=activeStandalone.filter(u=>!platoonCallsigns.has(u.callsign));
-  const loosePersonnel=looseUnits.reduce((s,u)=>s+Number(u.crew||0),0);
 
-  $('statActive').textContent=looseUnits.length+Number(platoonSummary.vehicles||0);
-  $('statStaff').textContent=loosePersonnel+Number(platoonSummary.personnel||0);
+function platoonForUnit(unitId){
+  if(!window.PCLOG || typeof window.PCLOG.getPlatoonForUnit!=='function') return null;
+  return window.PCLOG.getPlatoonForUnit(unitId);
+}
+function unitPlatoonBadge(unitId){
+  const p=platoonForUnit(unitId);
+  return p ? `<span class="unit-platoon-badge">${esc(p.name)}</span>` : '';
+}
+function renderDashboard(){
+  const activeUnits=state.units.filter(active);
+  const platoonExtra=(window.PCLOG && typeof window.PCLOG.getExtraPlatoonPersonnel==='function')
+    ? window.PCLOG.getExtraPlatoonPersonnel()
+    : 0;
+  $('statActive').textContent=activeUnits.length;
+  $('statStaff').textContent=activeUnits.reduce((s,u)=>s+Number(u.crew||0),0)+Number(platoonExtra||0);
 
   const now=Date.now();
   let r60=0,unplanned=0;
-  activeStandalone.forEach(u=>{
+  activeUnits.forEach(u=>{
     const next=(u.reliefs||[]).slice().sort((x,y)=>new Date(x.time)-new Date(y.time))[0];
     if(next){const d=new Date(next.time)-now;if(d>=0&&d<=3600000)r60++;}
     else if(hoursSince(u.startTime)>=3)unplanned++;
   });
-  if(typeof window.getPlatoonReliefStats==='function'){
-    const ps=window.getPlatoonReliefStats();
-    r60+=ps.within60;unplanned+=ps.unplanned;
-  }
   $('statRelief60').textContent=r60;
   $('statUnplanned').textContent=unplanned;
 }
@@ -279,14 +280,14 @@ function renderTimeline(){
     const first=rel[0]?new Date(rel[0].time).getTime():Date.now();
     const l=Math.max(0,(new Date(u.startTime).getTime()-start)/total*100),w=Math.max(.8,(Math.min(first,end)-Math.max(new Date(u.startTime).getTime(),start))/total*100);
     const seg=rel.map((r,i)=>{const rs=new Date(r.time).getTime(),re=i+1<rel.length?new Date(rel[i+1].time).getTime():end;return `<div class="bar relief" style="left:${Math.max(0,(rs-start)/total*100)}%;width:${Math.max(.8,(Math.min(re,end)-Math.max(rs,start))/total*100)}%">${esc(r.unit||'Extern')} · ${esc(r.kind)}</div>`}).join('');
-    return `<div class="tlrow"><div class="tllabel"><strong>${esc(unitLabel(u))}</strong><br>${esc(u.status)}</div><div class="tltrack"><div class="now" style="left:${(Date.now()-start)/total*100}%"></div><div class="bar" style="left:${l}%;width:${w}%">${esc(u.callsign)}</div>${seg}</div></div>`;
+    return `<div class="tlrow"><div class="tllabel"><strong>${esc(unitLabel(u))}</strong>${unitPlatoonBadge(u.id)}<br>${esc(u.status)}</div><div class="tltrack"><div class="now" style="left:${(Date.now()-start)/total*100}%"></div><div class="bar" style="left:${l}%;width:${w}%">${esc(u.callsign)}</div>${seg}</div></div>`;
   }).join('');
   $('timelineRows').className='timeline'; $('timelineRows').innerHTML=rows||'<div class="postinfo">Nog geen actieve eenheden.</div>';
 }
 function renderCards(){
   const q=$('search').value.toLowerCase();
   const arr=state.units.filter(u=>JSON.stringify(u).toLowerCase().includes(q));
-  $('cards').innerHTML=arr.map(u=>`<article class="card"><div class="cardhead"><div><span class="badge ${u.source==='VGGM'?'vggm':u.source==='VR'?'vr':'other'}">${esc(u.sourceCode)}</span><br><strong>${esc(unitLabel(u))}</strong></div><span class="badge status">${esc(u.status)}</span></div><div class="cardgrid"><div><strong>Inzetduur</strong>${duration(hoursSince(u.startTime))}</div><div><strong>Bezetting</strong>${u.crew}</div><div><strong>Inzetvak</strong>${esc(u.sector)}</div><div><strong>Aflossingen</strong>${(u.reliefs||[]).length}</div><div><strong>Opdracht</strong>${esc(u.assignment)}</div><div><strong>Contact</strong>${esc(u.commander)}</div></div><div class="cardactions"><button class="secondary" onclick="openRelief('${u.id}')">Aflossing</button><button class="secondary" onclick="cycleStatus('${u.id}')">Status</button><button class="danger" onclick="removeUnit('${u.id}')">Verwijder</button></div></article>`).join('')||'<div class="postinfo">Nog geen eenheden geregistreerd.</div>';
+  $('cards').innerHTML=arr.map(u=>`<article class="card"><div class="cardhead"><div><span class="badge ${u.source==='VGGM'?'vggm':u.source==='VR'?'vr':'other'}">${esc(u.sourceCode)}</span><br><strong>${esc(unitLabel(u))}</strong>${unitPlatoonBadge(u.id)}</div><span class="badge status">${esc(u.status)}</span></div><div class="cardgrid"><div><strong>Inzetduur</strong>${duration(hoursSince(u.startTime))}</div><div><strong>Bezetting</strong>${u.crew}</div><div><strong>Inzetvak</strong>${esc(u.sector)}</div><div><strong>Aflossingen</strong>${(u.reliefs||[]).length}</div><div><strong>Opdracht</strong>${esc(u.assignment)}</div><div><strong>Contact</strong>${esc(u.commander)}</div></div><div class="cardactions"><button class="secondary" onclick="openRelief('${u.id}')">Aflossing</button><button class="secondary" onclick="cycleStatus('${u.id}')">Status</button><button class="danger" onclick="removeUnit('${u.id}')">Verwijder</button></div></article>`).join('')||'<div class="postinfo">Nog geen eenheden geregistreerd.</div>';
 }
 window.openRelief=id=>{
   const u=state.units.find(x=>x.id===id); if(!u)return;
