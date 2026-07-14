@@ -1,5 +1,5 @@
 {
-  "version": "32.0.0",
+  "version": "32.1.0",
   "released": "2026-07-14",
-  "notes": "Nieuwe hoofdversie met operationeel dashboard, restdekkingsrail, centrale kaart, vast detailpaneel en lichtere V31-kleuren."
+  "notes": "Opstartfout opgelost. Kaartselectie gebeurt uitsluitend via posten; gebied wordt automatisch herkend. Postranden tonen de restdekkingsstatus."
 }

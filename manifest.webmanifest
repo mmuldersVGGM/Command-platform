@@ -1,6 +1,6 @@
 {
-  "name": "Command Platform v32",
-  "short_name": "Command v32",
+  "name": "Command Platform v32.1",
+  "short_name": "Command v32.1",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

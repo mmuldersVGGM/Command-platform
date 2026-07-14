@@ -689,3 +689,36 @@ input,select,textarea{background:#10283d!important;border-color:#406078!importan
   .detail-rail{display:block}
   .operational-map-panel .coverage-map{min-height:390px}
 }
+
+/* v32.1: post selection is primary; area status appears as marker ring */
+.coverage-svg .coverage-region{
+  pointer-events:none!important;
+  cursor:default!important;
+  fill-opacity:0!important;
+  stroke-width:1.5!important;
+  stroke:#5d7488!important;
+}
+.coverage-svg .coverage-region:hover{fill-opacity:0!important;stroke:#5d7488!important}
+.coverage-labels text{opacity:.72}
+.coverage-rail-card{cursor:default!important}
+.coverage-rail-card:hover{filter:none!important;transform:none!important}
+.marker{
+  border-width:3px!important;
+  border-style:solid!important;
+}
+.marker.coverage-ring-good{border-color:#62d17b!important;box-shadow:0 0 0 2px rgba(98,209,123,.22)!important}
+.marker.coverage-ring-limited{border-color:#ffb12e!important;box-shadow:0 0 0 3px rgba(255,177,46,.30)!important}
+.marker.coverage-ring-critical{border-color:#ff6468!important;box-shadow:0 0 0 3px rgba(255,100,104,.34)!important}
+.marker.coverage-ring-flash{
+  border-color:#ff3842!important;
+  box-shadow:0 0 0 4px rgba(255,56,66,.42)!important;
+  animation:postCoveragePulse 1.25s infinite;
+}
+.marker.selected{
+  outline:3px solid #fff!important;
+  outline-offset:3px!important;
+  z-index:20!important;
+}
+@keyframes postCoveragePulse{
+  50%{box-shadow:0 0 0 7px rgba(255,56,66,.15),0 0 15px rgba(255,56,66,.65)}
+}

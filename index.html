@@ -4,18 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#071423">
-<title>Command Platform v32</title>
-<link rel="stylesheet" href="styles.css?v=32.0.0">
-<link rel="manifest" href="manifest.webmanifest?v=32.0.0">
+<title>Command Platform v32.1</title>
+<link rel="stylesheet" href="styles.css?v=32.1.0">
+<link rel="manifest" href="manifest.webmanifest?v=32.1.0">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<script src="data.js?v=32.0.0" defer></script>
-<script src="app.js?v=32.0.0" defer></script>
-<script src="pc-log.js?v=32.0.0" defer></script>
+<script src="data.js?v=32.1.0" defer></script>
+<script src="app.js?v=32.1.0" defer></script>
+<script src="pc-log.js?v=32.1.0" defer></script>
 </head>
 <body class="professional-ui">
 <header class="app-header">
-  <div><h1>Command Platform v32</h1><p>OVD · HIN · HON · PC Logistiek</p></div>
+  <div><h1>Command Platform v32.1</h1><p>OVD · HIN · HON · PC Logistiek</p></div>
   <div class="header-tools">
       <label>Werkmodus
         <select id="roleMode">
@@ -29,7 +29,7 @@
       </label>
       <button id="checkUpdate" class="secondary">Controleer update</button>
 <a class="secondary recovery-link" href="reset-cache.html">Herstel/vernieuw app</a>
-      <div><strong id="versionLabel">v32.0</strong><br><span id="clock"></span></div>
+      <div><strong id="versionLabel">v32.1</strong><br><span id="clock"></span></div>
     </div>
 </header>
 
@@ -60,24 +60,24 @@
   <aside class="coverage-rail">
     <div class="rail-heading">
       <h2>Restdekking</h2>
-      <p>Klik op een gebied</p>
+      <p>Gebied wordt bepaald via de gekozen post</p>
     </div>
-    <button class="coverage-rail-card" data-rail-area="Noord">
+    <div class="coverage-rail-card" data-rail-area="Noord">
       <span class="rail-name"><i></i>Noord</span><strong id="railPctNoord">100%</strong>
       <small id="railStatusNoord">Voldoende</small><b><em id="railBarNoord"></em></b>
-    </button>
-    <button class="coverage-rail-card" data-rail-area="Midden">
+    </div>
+    <div class="coverage-rail-card" data-rail-area="Midden">
       <span class="rail-name"><i></i>Midden</span><strong id="railPctMidden">100%</strong>
       <small id="railStatusMidden">Voldoende</small><b><em id="railBarMidden"></em></b>
-    </button>
-    <button class="coverage-rail-card" data-rail-area="Zuidoost">
+    </div>
+    <div class="coverage-rail-card" data-rail-area="Zuidoost">
       <span class="rail-name"><i></i>Zuidoost</span><strong id="railPctZuidoost">100%</strong>
       <small id="railStatusZuidoost">Voldoende</small><b><em id="railBarZuidoost"></em></b>
-    </button>
-    <button class="coverage-rail-card" data-rail-area="Zuidwest">
+    </div>
+    <div class="coverage-rail-card" data-rail-area="Zuidwest">
       <span class="rail-name"><i></i>Zuidwest</span><strong id="railPctZuidwest">100%</strong>
       <small id="railStatusZuidwest">Voldoende</small><b><em id="railBarZuidwest"></em></b>
-    </button>
+    </div>
     <div class="rail-legend">
       <span><i class="good"></i>Voldoende</span>
       <span><i class="limited"></i>Beperkt</span>
@@ -88,7 +88,7 @@
 
   <div class="operational-map-column">
     <section id="map" class="panel operational-map-panel">
-  <div class="map-titlebar"><div><h2>Operationele kaart</h2><p>Selecteer een gebied of post voor detailinformatie.</p></div><button id="clearMap" class="secondary">Wis selectie</button></div>
+  <div class="map-titlebar"><div><h2>Operationele kaart</h2><p>Klik op een post. Het bijbehorende gebied wordt automatisch herkend.</p></div><button id="clearMap" class="secondary">Wis selectie</button></div>
   <div class="coverage-toolbar">
     <span>Restdekking tonen:</span>
     <button class="coverage-filter active" data-coverage-filter="ALL">Alle slagkracht</button>
@@ -168,8 +168,8 @@
   <aside class="detail-rail">
     <div class="detail-section">
       <span class="detail-kicker">Gebied informatie</span>
-      <div class="detail-title-row"><h2 id="sideAreaTitle">Selecteer een gebied</h2><span id="sideAreaBadge" class="side-status">—</span></div>
-      <p id="sideAreaSubtitle">Klik links of op de kaart.</p>
+      <div class="detail-title-row"><h2 id="sideAreaTitle">Selecteer een post</h2><span id="sideAreaBadge" class="side-status">—</span></div>
+      <p id="sideAreaSubtitle">Klik op een post op de kaart.</p>
       <div class="side-metrics">
         <div><span>Eenheden</span><strong id="sideTotal">0</strong><small>Totaal</small></div>
         <div><span>Beschikbaar</span><strong id="sideAvailable">0</strong><small>Vrij</small></div>

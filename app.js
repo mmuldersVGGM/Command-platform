@@ -37,7 +37,7 @@ function active(u){return ['Onderweg','Ingezet','Aflossing gepland'].includes(u.
 function hoursSince(s){return s?Math.max(0,(Date.now()-new Date(s))/3600000):0;}
 function duration(h){const m=Math.floor(h*60);return `${Math.floor(m/60)}u ${m%60}m`;}
 
-const APP_VERSION='32.0.0';
+const APP_VERSION='32.1.0';
 
 function initRoleMode(){
   const saved=localStorage.getItem('cp_role_mode')||'ALL';
@@ -98,7 +98,7 @@ function init(){
     document.body.prepend(box);
   }
   if('serviceWorker' in navigator){
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=29.2.0',{updateViaCache:'none'}).then(r=>r.update()).catch(console.warn));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=32.1.0',{updateViaCache:'none'}).then(r=>r.update()).catch(console.warn));
   }
 }
 
@@ -143,12 +143,7 @@ function bind(){
   $('clearAll').onclick=clearAll;
   $('clearMap').onclick=()=>{state.selectedPost='';$('post').value='';renderMarkers();renderPostInfo();};
   document.querySelectorAll('.coverage-filter').forEach(btn=>btn.onclick=()=>setCoverageFilter(btn.dataset.coverageFilter));
-  document.querySelectorAll('[data-rail-area]').forEach(btn=>btn.onclick=()=>selectCoverageArea(btn.dataset.railArea));
   document.querySelectorAll('[data-jump]').forEach(btn=>btn.onclick=()=>$(btn.dataset.jump)?.scrollIntoView({behavior:'smooth'}));
-  document.querySelectorAll('.coverage-region').forEach(region=>{
-    region.onclick=()=>openCoverageArea(region.dataset.area);
-    region.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openCoverageArea(region.dataset.area);}};
-  });
   $('addRelief').onclick=addRelief;
 }
 
@@ -407,11 +402,12 @@ function renderCoverageRegions(){
     const label=document.querySelector(`[data-label-area="${area}"]`);
     if(label)label.textContent=area;
     btn.setAttribute('aria-label',`${area}, ${data.free} van ${data.total} beschikbaar`);
-    btn.setAttribute('tabindex','0');
-    btn.setAttribute('role','button');
+    btn.removeAttribute('tabindex');
+    btn.removeAttribute('role');
+    btn.setAttribute('aria-hidden','true');
   });
   updateCoverageRail();
-  if(selectedCoverageArea)renderSideArea(selectedCoverageArea);
+  if(selectedCoverageArea)renderSideArea(selectedCoverageArea,state.selectedPost);
 }
 function coverageVehicleCard(v,unit=null){
   const status=unit?unit.status:'Beschikbaar';
@@ -443,7 +439,7 @@ function selectCoverageArea(area){
   updateCoverageRail();
   renderSideArea(area);
 }
-function renderSideArea(area){
+function renderSideArea(area,selectedPost=''){
   const data=coverageScore(area);
   const activeMap=data.activeMap;
   const deployed=data.fleet.filter(v=>activeMap.has(v.number));
@@ -453,8 +449,8 @@ function renderSideArea(area){
   let platoons=[];
   if(window.PCLOG && typeof window.PCLOG.getPlatoonsForArea==='function')platoons=window.PCLOG.getPlatoonsForArea(area);
 
-  $('sideAreaTitle').textContent=area;
-  $('sideAreaSubtitle').textContent=`Restdekking voor ${coverageFilter==='ALL'?'alle operationele slagkracht':coverageFilter}.`;
+  $('sideAreaTitle').textContent=selectedPost ? `${selectedPost} · ${area}` : area;
+  $('sideAreaSubtitle').textContent=selectedPost ? `De post behoort tot ${area}. Restdekking voor ${coverageFilter==='ALL'?'alle operationele slagkracht':coverageFilter}.` : `Restdekking voor ${coverageFilter==='ALL'?'alle operationele slagkracht':coverageFilter}.`;
   const badge=$('sideAreaBadge');
   badge.textContent=statusText(data.status);
   badge.className=`side-status ${data.status}`;
@@ -482,6 +478,16 @@ window.jumpToCoverageUnit=unitId=>{
 };
 window.openCoverageArea=openCoverageArea;
 
+
+function areaForPost(post){
+  return Object.keys(AREAS).find(area=>(AREAS[area]||[]).includes(post))||'';
+}
+function postCoverageState(post){
+  const area=areaForPost(post);
+  if(!area)return {area:'',status:'good'};
+  const data=coverageScore(area);
+  return {area,status:data.status};
+}
 function postStatus(post){
   const units=state.units.filter(u=>u.source==='VGGM'&&u.post===post&&active(u));
   let level=''; const now=Date.now();
@@ -492,22 +498,44 @@ function postStatus(post){
   return {units,level};
 }
 function selectPost(p){
-  state.selectedPost=p; renderMarkers(); renderPostInfo();
-  const area=Object.keys(AREAS).find(a=>AREAS[a].includes(p));
-  if(area){$('area').value=area;fillPosts();$('post').value=p;fillVehicles();fillTasks();}
+  state.selectedPost=p;
+  const area=areaForPost(p);
+  selectedCoverageArea=area;
+  renderMarkers();
+  renderPostInfo();
+  updateCoverageRail();
+  if(area)renderSideArea(area,p);
+  if(area && $('area')){
+    $('area').value=area;
+    fillPosts();
+    if($('post'))$('post').value=p;
+    fillVehicles();
+    fillTasks();
+  }
 }
 function renderMarkers(){
   $('markers').innerHTML=Object.entries(POST_COORDS).map(([p,[x,y]])=>{
-    const s=postStatus(p); const cls=['marker',s.level,state.selectedPost===p?'selected':'',s.units.length?'hascount':''].join(' ');
-    return `<button class="${cls}" style="left:${x}%;top:${y}%" data-count="${s.units.length}" title="${esc(p)}" onclick="selectPost('${esc(p)}')"></button>`;
+    const s=postStatus(p);
+    const coverage=postCoverageState(p);
+    const cls=[
+      'marker',
+      s.level,
+      state.selectedPost===p?'selected':'',
+      s.units.length?'hascount':'',
+      `coverage-ring-${coverage.status}`
+    ].join(' ');
+    const title=`${p} • ${coverage.area} • ${statusText(coverage.status)}`;
+    return `<button class="${cls}" style="left:${x}%;top:${y}%" data-count="${s.units.length}" title="${esc(title)}" aria-label="${esc(title)}" onclick="selectPost('${esc(p)}')"></button>`;
   }).join('');
 }
 window.selectPost=selectPost;
 function renderPostInfo(){
+  const box=$('selectedPostInfo');
+  if(!box)return;
   const p=state.selectedPost;
-  if(!p){$('selectedPostInfo').textContent='Geen post geselecteerd.';return;}
+  if(!p){box.textContent='Geen post geselecteerd.';return;}
   const veh=VEHICLES[p]||[], task=TASKS[p]||[], activeUnits=postStatus(p).units;
-  $('selectedPostInfo').innerHTML=`<strong>${esc(p)} • ${veh.length} voertuigen</strong><div>Actief: ${activeUnits.length}</div><div class="chips">${task.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`;
+  box.innerHTML=`<strong>${esc(p)} • ${veh.length} voertuigen</strong><div>Actief: ${activeUnits.length}</div><div class="chips">${task.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`;
 }
 
 
