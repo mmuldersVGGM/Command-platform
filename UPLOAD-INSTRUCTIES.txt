@@ -1,13 +1,15 @@
-COMMAND PLATFORM v30
+COMMAND PLATFORM v31 – PROFESSIONAL UI
 
-Nieuw:
-- interactieve restdekking op de kaart voor Noord, Midden, Zuidoost en Zuidwest;
-- gebieden worden groen, geel, rood of knipperend rood;
-- tik op een gebied voor beschikbare, ingezette en gekoppelde pelotoneenheden;
-- filters voor alle slagkracht, TS, hoogte, water en specialismen;
-- geen tabellen voor restdekking;
-- registratieformulier visueel vernieuwd met duidelijke stappen en veldgroepen;
-- controle op compleetheid van pelotons verwijderd.
+Deze versie is een visuele herontwikkeling van de bestaande applicatie.
+Er zijn bewust geen nieuwe operationele functies toegevoegd.
 
-Upload alle bestanden naar GitHub en overschrijf de bestaande bestanden.
-Wacht op groen vinkje bij Actions en open daarna reset-cache.html of gebruik Controleer update.
+Aangepast:
+- consistente donkerblauwe stijl in alle onderdelen;
+- formulieren, eenheden, pelotons, logistiek, CoPI, tijdlijn en dialoogvensters in dezelfde stijl;
+- geen pictogrammen in koppen of formulieren;
+- statuskleuren groen, oranje, rood, blauw en paars;
+- restdekkingskleuren blijven binnen de contour van het werkgebied;
+- bestaande workflow en functionaliteiten blijven intact.
+
+Upload alle bestanden naar de hoofdmap van GitHub en overschrijf de bestaande bestanden.
+Klik Commit changes, wacht op het groene vinkje bij Actions en open daarna reset-cache.html.

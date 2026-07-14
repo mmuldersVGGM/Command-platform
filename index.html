@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1f2937">
-<title>Command Platform v30</title>
-<link rel="stylesheet" href="styles.css?v=30.0.0">
-<link rel="manifest" href="manifest.webmanifest?v=30.0.0">
+<meta name="theme-color" content="#071423">
+<title>Command Platform v31</title>
+<link rel="stylesheet" href="styles.css?v=31.0.0">
+<link rel="manifest" href="manifest.webmanifest?v=31.0.0">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<script src="data.js?v=30.0.0" defer></script>
-<script src="app.js?v=30.0.0" defer></script>
-<script src="pc-log.js?v=30.0.0" defer></script>
+<script src="data.js?v=31.0.0" defer></script>
+<script src="app.js?v=31.0.0" defer></script>
+<script src="pc-log.js?v=31.0.0" defer></script>
 </head>
-<body>
-<header>
-  <div><h1>Command Platform v30</h1><p>OVD · HIN · HON · PC Logistiek</p></div>
+<body class="professional-ui">
+<header class="app-header">
+  <div><h1>Command Platform v31</h1><p>OVD · HIN · HON · PC Logistiek</p></div>
   <div class="header-tools">
       <label>Werkmodus
         <select id="roleMode">
@@ -29,11 +29,11 @@
       </label>
       <button id="checkUpdate" class="secondary">Controleer update</button>
 <a class="secondary recovery-link" href="reset-cache.html">Herstel/vernieuw app</a>
-      <div><strong id="versionLabel">v30.0</strong><br><span id="clock"></span></div>
+      <div><strong id="versionLabel">v31.0</strong><br><span id="clock"></span></div>
     </div>
 </header>
 
-<nav class="quicknav">
+<nav class="quicknav app-nav">
   <button data-target="dashboard">Dashboard</button>
   <button data-target="map">Kaart</button>
   <button data-target="register">Registreren</button>
@@ -46,7 +46,7 @@
   <button data-target="copi">CoPI</button>
 </nav>
 
-<main>
+<main class="app-main">
 <section id="dashboard" class="stats">
   <div class="stat"><span>Actieve eenheden</span><strong id="statActive">0</strong></div>
   <div class="stat"><span>Personeel actief</span><strong id="statStaff">0</strong></div>
@@ -68,12 +68,53 @@
   </div>
   <div class="mapwrap coverage-map">
     <img src="map.png" alt="Kaart werkgebied">
-    <div id="coverageRegions" aria-label="Restdekking per gebied">
-      <button class="coverage-region north" data-area="Noord"><span>Noord</span></button>
-      <button class="coverage-region middle" data-area="Midden"><span>Midden</span></button>
-      <button class="coverage-region southeast" data-area="Zuidoost"><span>Zuidoost</span></button>
-      <button class="coverage-region southwest" data-area="Zuidwest"><span>Zuidwest</span></button>
-    </div>
+    <svg id="coverageRegions" class="coverage-svg" viewBox="0 0 1365 1151" role="img" aria-label="Restdekking per gebied">
+      <defs>
+        <clipPath id="workAreaClip">
+          <path d="M35,82 C82,42 133,37 156,31 C174,84 210,112 270,157 L325,183
+                   C319,218 302,244 290,276 C300,316 281,344 251,365
+                   L180,421 C156,444 145,478 164,514 C188,548 239,561 272,576
+                   C311,607 337,659 361,708 C381,751 398,793 398,842
+                   C411,875 445,890 471,902 C491,935 530,963 549,1007
+                   C612,1027 675,1070 735,1059 C772,1081 799,1080 821,1060
+                   C847,1092 875,1096 908,1065 C954,1046 989,1073 1015,1099
+                   C1052,1084 1087,1063 1127,1085 C1162,1103 1192,1133 1226,1122
+                   C1263,1113 1270,1080 1244,1050 C1217,1023 1194,997 1206,967
+                   C1210,941 1197,915 1181,892 C1173,863 1189,841 1216,823
+                   C1238,808 1250,784 1241,755 C1226,737 1223,708 1238,681
+                   C1253,658 1268,634 1257,607 C1247,584 1224,577 1200,583
+                   C1174,589 1150,577 1134,555 C1122,535 1101,520 1079,519
+                   C1048,515 1018,530 994,548 C966,565 941,552 920,535
+                   C897,520 874,510 850,516 C828,523 810,548 790,561
+                   C761,577 725,572 704,549 C679,520 649,490 616,478
+                   C584,466 554,468 525,484 C503,496 480,499 459,489
+                   C430,476 410,449 390,420 C365,381 337,342 310,304
+                   C288,272 300,232 322,196 C291,175 260,158 228,140
+                   C187,116 168,84 156,31 Z"/>
+        </clipPath>
+      </defs>
+      <g clip-path="url(#workAreaClip)">
+        <path class="coverage-region" data-area="Noord"
+          d="M20,10 H820 V350 C720,330 650,330 590,365 C510,410 455,405 385,385
+             C300,360 220,345 135,320 L20,285 Z"/>
+        <path class="coverage-region" data-area="Midden"
+          d="M115,300 C240,335 330,370 415,392 C515,420 610,390 705,355
+             C790,325 900,350 1000,410 L955,660 C870,690 815,705 725,690
+             C610,670 510,660 405,685 C310,705 230,680 150,630 Z"/>
+        <path class="coverage-region" data-area="Zuidwest"
+          d="M95,600 C205,650 300,690 405,685 C485,685 540,715 590,785
+             L520,1135 H40 Z"/>
+        <path class="coverage-region" data-area="Zuidoost"
+          d="M560,660 C650,680 735,700 835,675 C930,650 1030,620 1130,610
+             L1325,1135 H500 L590,785 Z"/>
+      </g>
+      <g class="coverage-labels">
+        <text x="455" y="225" data-label-area="Noord">Noord</text>
+        <text x="500" y="515" data-label-area="Midden">Midden</text>
+        <text x="330" y="865" data-label-area="Zuidwest">Zuidwest</text>
+        <text x="860" y="825" data-label-area="Zuidoost">Zuidoost</text>
+      </g>
+    </svg>
     <div id="markers"></div>
   </div>
   <div class="coverage-legend">
@@ -103,7 +144,7 @@
 
   <form id="unitForm">
     <div class="stepPane active" data-pane="1">
-      <h3>🚒 Herkomst en eenheid</h3><p class="step-intro">Kies hoe en waar de eenheid wordt ingezet.</p>
+      <h3>Herkomst en eenheid</h3><p class="step-intro">Kies hoe en waar de eenheid wordt ingezet.</p>
 
       <div class="deployment-choice">
         <label><input type="radio" name="deploymentMode" value="LOOSE" checked> Losse eenheid</label>
@@ -163,7 +204,7 @@
     </div>
 
     <div class="stepPane" data-pane="2">
-      <h3>📍 Inzetgegevens</h3><p class="step-intro">Leg status, locatie, opdracht en contact vast.</p>
+      <h3>Inzetgegevens</h3><p class="step-intro">Leg status, locatie, opdracht en contact vast.</p>
       <div class="grid">
         <label>Status<select id="status"><option>Ingezet</option><option>Onderweg</option><option>Aflossing gepland</option><option>Afgelost</option><option>Beschikbaar</option></select></label>
         <label>Start inzet<input id="startTime" type="datetime-local"></label>
@@ -176,7 +217,7 @@
     </div>
 
     <div class="stepPane" data-pane="3">
-      <h3>🔄 Eerste aflossing</h3><p class="step-intro">Optioneel. Latere aflossingen kunnen altijd worden toegevoegd.</p>
+      <h3>Eerste aflossing</h3><p class="step-intro">Optioneel. Latere aflossingen kunnen altijd worden toegevoegd.</p>
       <label class="toggle"><input id="planRelief" type="checkbox"> Direct een aflossing plannen</label>
       <div id="reliefFields" class="grid hidden">
         <label>Herkomst<select id="reliefSource"><option value="VGGM">VGGM</option><option value="VR">Andere veiligheidsregio</option><option value="OTHER">Overige organisatie</option></select></label>
@@ -191,7 +232,7 @@
     </div>
 
     <div class="stepPane" data-pane="4">
-      <h3>✅ Controle</h3><p class="step-intro">Controleer de gegevens voordat je registreert.</p>
+      <h3>Controleren</h3><p class="step-intro">Controleer de gegevens voordat je registreert.</p>
       <div id="review" class="review"></div>
       <div class="actions"><button type="button" class="secondary prev" data-prev="3">Terug</button><button type="submit" class="primary">Eenheid registreren</button></div>
     </div>

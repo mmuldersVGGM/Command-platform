@@ -1,11 +1,11 @@
 {
-  "name": "Command Platform v30",
-  "short_name": "Command v30",
+  "name": "Command Platform v31",
+  "short_name": "Command v31",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f3f4f6",
-  "theme_color": "#1f2937",
+  "background_color": "#071423",
+  "theme_color": "#071423",
   "icons": [
     {
       "src": "icon-192.png",

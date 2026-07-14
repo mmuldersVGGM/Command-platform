@@ -37,7 +37,7 @@ function active(u){return ['Onderweg','Ingezet','Aflossing gepland'].includes(u.
 function hoursSince(s){return s?Math.max(0,(Date.now()-new Date(s))/3600000):0;}
 function duration(h){const m=Math.floor(h*60);return `${Math.floor(m/60)}u ${m%60}m`;}
 
-const APP_VERSION='30.0.0';
+const APP_VERSION='31.0.0';
 
 function initRoleMode(){
   const saved=localStorage.getItem('cp_role_mode')||'ALL';
@@ -143,7 +143,10 @@ function bind(){
   $('clearAll').onclick=clearAll;
   $('clearMap').onclick=()=>{state.selectedPost='';$('post').value='';renderMarkers();renderPostInfo();};
   document.querySelectorAll('.coverage-filter').forEach(btn=>btn.onclick=()=>setCoverageFilter(btn.dataset.coverageFilter));
-  document.querySelectorAll('.coverage-region').forEach(btn=>btn.onclick=()=>openCoverageArea(btn.dataset.area));
+  document.querySelectorAll('.coverage-region').forEach(region=>{
+    region.onclick=()=>openCoverageArea(region.dataset.area);
+    region.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openCoverageArea(region.dataset.area);}};
+  });
   $('addRelief').onclick=addRelief;
 }
 
@@ -398,10 +401,11 @@ function renderCoverageRegions(){
     if(!btn)return;
     btn.classList.remove('status-good','status-limited','status-critical','status-flash');
     btn.classList.add(`status-${data.status}`);
-    const label=btn.querySelector('span');
-    label.textContent=area;
-    btn.title=`${area}: ${data.free} van ${data.total} beschikbaar`;
+    const label=document.querySelector(`[data-label-area="${area}"]`);
+    if(label)label.textContent=area;
     btn.setAttribute('aria-label',`${area}, ${data.free} van ${data.total} beschikbaar`);
+    btn.setAttribute('tabindex','0');
+    btn.setAttribute('role','button');
   });
 }
 function coverageVehicleCard(v,unit=null){
