@@ -155,3 +155,6 @@ dialog .source-choice label{padding:8px}
 
 #deploymentPlatoonFields{margin:10px 0 14px;padding:10px;border:1px solid var(--line);border-radius:10px;background:#f8fafc}
 #deploymentPlatoonInfo{margin:0}
+
+.recovery-link{display:inline-flex;align-items:center;text-decoration:none;min-height:38px;padding:6px 10px;border-radius:8px}
+.startup-error{position:sticky;top:0;z-index:9999;background:#fff7ed;border-bottom:2px solid #f97316;color:#9a3412;padding:10px 14px;font-size:13px}

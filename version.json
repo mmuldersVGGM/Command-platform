@@ -1,5 +1,5 @@
 {
-  "version": "29.1.0",
+  "version": "29.2.0",
   "released": "2026-07-14",
-  "notes": "Herstelde dropdowns en zichtbare pelotonkeuze bij nieuwe inzet; peloton kan direct automatisch worden aangemaakt."
+  "notes": "Cacheherstel, netwerk-eerst laden en noodvulling van dropdownmenu's."
 }

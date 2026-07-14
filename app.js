@@ -37,7 +37,7 @@ function active(u){return ['Onderweg','Ingezet','Aflossing gepland'].includes(u.
 function hoursSince(s){return s?Math.max(0,(Date.now()-new Date(s))/3600000):0;}
 function duration(h){const m=Math.floor(h*60);return `${Math.floor(m/60)}u ${m%60}m`;}
 
-const APP_VERSION='29.1.0';
+const APP_VERSION='29.2.0';
 
 function initRoleMode(){
   const saved=localStorage.getItem('cp_role_mode')||'ALL';
@@ -77,18 +77,47 @@ function initUpdateCheck(){
 }
 
 function init(){
-  $('startTime').value=nowInput();
-  initRoleMode();
-  initUpdateCheck();
-  fillAreas();
-  initDeploymentPlatoonChoices();
-  fillRegions();
-  fillAllPosts();
-  bind();
-  render();
-  setInterval(()=>{ $('clock').textContent=new Date().toLocaleString('nl-NL'); render(); },60000);
-  $('clock').textContent=new Date().toLocaleString('nl-NL');
-  if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  try{
+    if($('startTime')) $('startTime').value=nowInput();
+    initRoleMode();
+    initUpdateCheck();
+    fillAreas();
+    fillRegions();
+    fillAllPosts();
+    initDeploymentPlatoonChoices();
+    bind();
+    render();
+    setInterval(()=>{ if($('clock')) $('clock').textContent=new Date().toLocaleString('nl-NL'); render(); },60000);
+    if($('clock')) $('clock').textContent=new Date().toLocaleString('nl-NL');
+  }catch(error){
+    console.error('Opstartfout Command Platform:',error);
+    emergencyPopulateForm();
+    const box=document.createElement('div');
+    box.className='startup-error';
+    box.innerHTML='<strong>Een onderdeel kon niet volledig starten.</strong><br>De keuzelijsten zijn met een noodroutine gevuld. Gebruik “Herstel/vernieuw app” als onderdelen ontbreken.';
+    document.body.prepend(box);
+  }
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=29.2.0',{updateViaCache:'none'}).then(r=>r.update()).catch(console.warn));
+  }
+}
+
+function emergencyPopulateForm(){
+  try{
+    const area=$('area');
+    if(area && area.options.length<2){
+      area.innerHTML='<option value="">Kies gebied</option>'+Object.keys(AREAS||{}).map(a=>`<option>${a}</option>`).join('');
+      area.onchange=fillPosts;
+    }
+    const type=$('deploymentPlatoonType');
+    if(type && type.options.length<2){
+      type.innerHTML=platoonTypesForDeployment().map(t=>`<option>${t}</option>`).join('');
+    }
+    const number=$('deploymentPlatoonNumber');
+    if(number && number.options.length<2){
+      number.innerHTML='<option value="">Kies pelotonnummer</option>'+[100,200,300,400,500,600,700,800,900].map(n=>`<option value="${n}">Peloton ${n}</option>`).join('');
+    }
+  }catch(e){console.error('Noodroutine mislukt:',e);}
 }
 
 function bind(){

@@ -1,13 +1,15 @@
-COMMAND PLATFORM v29.1 – HERSTELVERSIE
+COMMAND PLATFORM v29.2 – CACHE- EN FORMULIERHERSTEL
 
-Hersteld:
-- dropdownmenu's Gebied, Post, Voertuig en Taak werken weer;
-- keuze Losse eenheid / Onderdeel van peloton is zichtbaar;
-- pelotonnummer 100 t/m 900 is direct te kiezen;
-- bestaat het peloton nog niet, dan kies je het type en wordt het automatisch aangemaakt;
-- bestaat het peloton al, dan wordt het type automatisch overgenomen;
-- de geregistreerde eenheid wordt direct gekoppeld.
+Upload ALLE bestanden, inclusief:
+- reset-cache.html
 
-Upload ALLE bestanden naar de hoofdmap van GitHub en overschrijf de bestaande bestanden.
-Klik Commit changes, wacht op het groene vinkje bij Actions.
-Open daarna de app en gebruik Controleer update. Bij oude cache: Ctrl+F5.
+Na het groene vinkje bij Actions open je EERST:
+https://mmuldersvggm.github.io/Command-platform/reset-cache.html
+
+Klik daar op:
+'Cache wissen en nieuwste versie openen'
+
+Deze handeling verwijdert alleen tijdelijke websitecache.
+Ingevoerde lokale gegevens blijven behouden.
+
+Daarna moeten de dropdownmenu's en de keuze voor peloton zichtbaar en werkend zijn.

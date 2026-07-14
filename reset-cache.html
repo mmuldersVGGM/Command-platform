@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Command Platform herstellen</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#f3f4f6;padding:24px;color:#111827}
+main{max-width:620px;margin:auto;background:white;padding:24px;border-radius:14px;border:1px solid #d1d5db}
+button{padding:12px 16px;border:0;border-radius:9px;background:#b42318;color:white;font-weight:700}
+#status{margin-top:14px}
+</style>
+</head>
+<body>
+<main>
+<h1>Command Platform herstellen</h1>
+<p>Deze pagina verwijdert alleen de tijdelijke app-cache. Ingevoerde inzetgegevens in lokale opslag blijven behouden.</p>
+<button id="reset">Cache wissen en nieuwste versie openen</button>
+<div id="status"></div>
+</main>
+<script>
+document.getElementById('reset').onclick=async()=>{
+  const s=document.getElementById('status');
+  s.textContent='Bezig met herstellen…';
+  try{
+    if('serviceWorker' in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r=>r.unregister()));
+    }
+    if('caches' in window){
+      const keys=await caches.keys();
+      await Promise.all(keys.map(k=>caches.delete(k)));
+    }
+    s.textContent='Klaar. De nieuwste versie wordt geopend.';
+    location.replace('./?refresh='+Date.now());
+  }catch(e){
+    s.textContent='Automatisch herstellen lukte niet. Sluit alle vensters en open de website opnieuw.';
+  }
+};
+</script>
+</body>
+</html>
