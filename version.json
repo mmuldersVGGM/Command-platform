@@ -1,5 +1,5 @@
 {
-  "version": "32.1.0",
+  "version": "32.2.0",
   "released": "2026-07-14",
-  "notes": "Opstartfout opgelost. Kaartselectie gebeurt uitsluitend via posten; gebied wordt automatisch herkend. Postranden tonen de restdekkingsstatus."
+  "notes": "Leesbaarheid gekoppelde pelotoneenheden, navigatievolgorde, kaartlabels en verwijdering witte gebiedslijnen."
 }

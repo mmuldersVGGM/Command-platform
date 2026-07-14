@@ -722,3 +722,110 @@ input,select,textarea{background:#10283d!important;border-color:#406078!importan
 @keyframes postCoveragePulse{
   50%{box-shadow:0 0 0 7px rgba(255,56,66,.15),0 0 15px rgba(255,56,66,.65)}
 }
+
+
+/* ================================================================
+   Command Platform v32.2 — gerichte UI-correcties
+   ================================================================ */
+
+/* Navigatie direct onder de titelbalk; KPI-dashboard daaronder. */
+.app-nav{
+  position:sticky!important;
+  top:73px!important;
+  z-index:120!important;
+  order:0!important;
+}
+#dashboard{
+  margin:12px auto 14px!important;
+  position:relative!important;
+  z-index:20!important;
+}
+
+/* Gekoppelde eenheden binnen pelotons altijd goed leesbaar. */
+.platoon-unit-row{
+  background:#18354d!important;
+  border-color:#42627a!important;
+  color:#f7f9fc!important;
+}
+.platoon-unit-row *,
+.platoon-unit-row strong,
+.platoon-unit-row span,
+.platoon-unit-row small{
+  color:#f7f9fc!important;
+}
+.platoon-unit-row .small,
+.platoon-unit-row small{
+  color:#b8c7d3!important;
+}
+.platoon-unit-row .unit-platoon-badge{
+  background:#392b63!important;
+  color:#d9c9ff!important;
+  border:1px solid #6d58a2!important;
+}
+.platoon-unit-row .actions button{
+  color:#f7f9fc!important;
+}
+.platoon-empty{
+  background:#132c42!important;
+  border-color:#42627a!important;
+  color:#c7d4df!important;
+}
+
+/* Geen witte gebiedslijnen meer op de kaart. */
+.coverage-svg .coverage-region,
+.coverage-svg .coverage-region:hover,
+.coverage-svg .coverage-region.selected{
+  stroke:none!important;
+  outline:none!important;
+  filter:none!important;
+  fill-opacity:0!important;
+}
+
+/* Gebiedslabels beter gepositioneerd. */
+.coverage-labels text{
+  stroke:#081827!important;
+  stroke-width:5!important;
+}
+.coverage-labels [data-label-area="Zuidoost"]{
+  transform:translateX(125px);
+}
+.coverage-labels [data-label-area="Zuidwest"]{
+  transform:translateX(105px);
+}
+
+/* Alleen de postbolletjes en hun statusrand zijn leidend. */
+.coverage-svg{
+  pointer-events:none!important;
+}
+#markers{
+  pointer-events:auto!important;
+}
+.marker{
+  position:absolute!important;
+}
+
+/* Extra contrastcontrole voor kaarten, lijsten en velden. */
+.assign-row,
+.side-unit-card,
+.coverage-unit-card,
+.data-row,
+.advice-card{
+  background:#18354d!important;
+  color:#f7f9fc!important;
+  border-color:#42627a!important;
+}
+.assign-row strong,
+.side-unit-card strong,
+.coverage-unit-card strong{
+  color:#ffffff!important;
+}
+.assign-row .meta,
+.side-unit-card small,
+.coverage-unit-card .small{
+  color:#b8c7d3!important;
+}
+
+@media(max-width:1000px){
+  .app-nav{top:0!important}
+  #dashboard{margin:10px 0 12px!important}
+}

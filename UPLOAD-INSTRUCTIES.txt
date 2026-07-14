@@ -1,19 +1,27 @@
-COMMAND PLATFORM v32.1 – FOUTHERSTEL EN POSTSELECTIE
+COMMAND PLATFORM v32.2 – UI-CORRECTIE
+
+Dit is een updatepakket voor de bestaande v32.1-installatie.
+
+Upload alle bestanden uit dit pakket naar de hoofdmap van GitHub:
+- styles.css
+- map.png
+- sw.js
+- reset-cache.html
+- v32-2-ui.js
+- manifest.webmanifest
+- version.json
+
+Laat de overige bestaande bestanden staan.
 
 Opgelost:
-- de opstartmelding 'Een onderdeel kon niet volledig starten';
-- oorzaak was een verwijderd informatieveld dat nog door JavaScript werd aangeroepen.
+- gekoppelde eenheden in pelotons zijn goed leesbaar;
+- navigatiebalk staat direct onder de titelbalk;
+- KPI-dashboard staat onder de navigatie;
+- label Zuidoost staat verder naar rechts;
+- label Zuidwest staat verder naar rechts;
+- witte gebiedslijnen zijn verwijderd;
+- posten en hun gekleurde statusrand blijven leidend.
 
-Kaart:
-- gebieden zijn niet meer selecteerbaar;
-- klik uitsluitend op een post;
-- de app bepaalt automatisch bij welk gebied de post hoort;
-- het rechterpaneel toont post én gebied;
-- de rand van ieder postbolletje toont de restdekking van het gebied:
-  groen = voldoende
-  oranje = beperkt
-  rood = kritiek
-  knipperend rood = onder minimum
-
-Upload alle bestanden naar GitHub en overschrijf de bestaande bestanden.
-Wacht op het groene vinkje en open daarna reset-cache.html.
+Na upload en groen vinkje bij Actions:
+1. Open reset-cache.html.
+2. Klik op 'Cache wissen en v32.2 openen'.
