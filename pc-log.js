@@ -1,8 +1,8 @@
 
 'use strict';
 
-const PC_KEY='cp_pclog_v26';
-const OLD_PC_KEY='cp_pclog_v25';
+const PC_KEY='cp_pclog_v27';
+const OLD_PC_KEY='cp_pclog_v26';
 const REQUEST_STATUSES=['Nieuw','Geaccepteerd','Onderweg','Ter plaatse','Uitgevoerd','Geannuleerd'];
 const WATER_STATUSES=['Beschikbaar','Onderweg','Ter plaatse','Ingezet','Uitgeput','Retour'];
 const FOAM_STATUSES=['Beschikbaar','Onderweg','Ter plaatse','Ingezet','Uitgeput','Retour'];
@@ -13,6 +13,19 @@ const REHAB_STATES={
   rest:['Niet nodig','Nodig','In rust','Gereed'],
   medical:['Nee','Geadviseerd','Uitgevoerd']
 };
+
+const PLATOON_TYPES={
+  'Brandbestrijding':{description:'Meerdere tankautospuiten voor gezamenlijke brandbestrijding.',expect:{ts:4}},
+  'Natuurbrandbestrijding':{description:'Terreinaardige eenheden voor natuurbrandbestrijding.',expect:{natureTs:4}},
+  'Watertransport':{description:'Waterwinning, transport en grootschalige watervoorziening.',expect:{water:2}},
+  'Logistiek/ondersteuning':{description:'Materieel, verzorging, brandstof en logistieke ondersteuning.',expect:{logistics:2}},
+  'IBGS':{description:'Gevaarlijke stoffen, ontsmetting en specialistische ondersteuning.',expect:{ibgs:1}},
+  'Redding/waterongevallen':{description:'Redding, hulpverlening of waterongevallen.',expect:{rescue:1}},
+  'Maatwerk':{description:'Vrij samen te stellen peloton.',expect:{}}
+};
+const ACTIVE_PLATOON_STATUSES=['Onderweg','Ingezet','Aflossing gepland'];
+const ACTIVE_VEHICLE_STATUSES=['Onderweg','Ingezet','Aflossing gepland'];
+
 const DEFAULT_PC={
   scenario:{incident:'Testincident',grip:'Geen GRIP',phase:'Inzet',commander:'',location:'',notes:''},
   platoons:[],air:[],rehab:[],water:[],foam:[],equipment:[],requests:[],actions:[],decisions:[],diary:[]
@@ -22,6 +35,15 @@ let pcState=Object.assign({},DEFAULT_PC,JSON.parse(stored));
 for(const k of ['platoons','air','rehab','water','foam','equipment','requests','actions','decisions','diary']){
   if(!Array.isArray(pcState[k]))pcState[k]=[];
 }
+pcState.platoons.forEach(p=>{
+  if(!Array.isArray(p.vehicleUnits))p.vehicleUnits=[];
+  if(!p.platoonType)p.platoonType='Maatwerk';
+  if(!p.status)p.status='Ingezet';
+  if(!p.startTime)p.startTime='';
+  if(p.extraPersonnel===undefined)p.extraPersonnel='0';
+  p.vehicleUnits.forEach(v=>{if(!Array.isArray(v.reliefs))v.reliefs=[];});
+});
+
 function pcSave(){localStorage.setItem(PC_KEY,JSON.stringify(pcState));}
 function pcId(){return (crypto.randomUUID?crypto.randomUUID():'pc-'+Date.now()+'-'+Math.random().toString(36).slice(2));}
 function pcEsc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
@@ -37,6 +59,11 @@ function pcInit(){
   ids.forEach(id=>{const el=document.getElementById(id);if(el)el.onclick=()=>openPcDialog(id);});
   document.getElementById('savePcDialog').onclick=savePcDialog;
   document.getElementById('refreshOperational').onclick=renderPcLog;
+  document.getElementById('savePlatoonVehicle').onclick=savePlatoonVehicle;
+  document.getElementById('addPlatoonRelief').onclick=addPlatoonVehicleRelief;
+  fillPlatoonPostSelects();
+  togglePlatoonVehicleSource();
+  togglePlatoonReliefSource();
   renderPcLog();
 }
 document.addEventListener('DOMContentLoaded',pcInit);
@@ -48,8 +75,10 @@ function switchLogTab(name){
 
 const DIALOGS={
   newPlatoon:{title:'Peloton',type:'platoon',fields:[
-    ['name','Naam peloton','text','Peloton 1'],['commander','Pelotonscommandant','text',''],
-    ['personnel','Personeel','number','32'],['vehicles','Voertuigen','number','8'],
+    ['name','Naam peloton','text','Peloton 1'],['platoonType','Soort peloton','select',Object.keys(PLATOON_TYPES).join('|')],
+    ['status','Status','select','Geformeerd|Onderweg|Ingezet|Aflossing gepland|Afgelost|Beschikbaar'],
+    ['startTime','Start inzet','datetime-local',''],['commander','Pelotonscommandant','text',''],
+    ['extraPersonnel','Extra personeel buiten voertuigen','number','0'],
     ['air','Ademlucht %','number','100'],['water','Water %','number','100'],
     ['foam','Schuim %','number','100'],['food','Voeding','select','Nee|Geregeld|Onderweg'],
     ['rest','Rustlocatie','select','Nee|Geregeld|In gebruik'],['sector','Sector/inzetvak','select','Onverdeeld|Noord|Oost|Zuid|West']
@@ -131,12 +160,186 @@ function savePcDialog(){
     addDiary(`${dialogConfig.title} gewijzigd (${item.name||item.unit||item.request||item.text||''}): ${changes.join(', ')||'geen inhoudelijke wijziging'}`,'Wijziging');
   }else{
     const item={id:pcId(),created:new Date().toISOString(),...values};
+    if(collection==='platoons')item.vehicleUnits=[];
     pcState[collection].push(item);
     addDiary(`${dialogConfig.title} toegevoegd: ${item.name||item.unit||item.request||item.text||''}`,dialogConfig.type);
   }
   pcSave();document.getElementById('pcLogDialog').close();renderPcLog();
 }
 window.pcEdit=(buttonId,collection,id)=>openPcDialog(buttonId,collection,id);
+
+
+function platoonVehicleCrew(p){
+  return (p.vehicleUnits||[]).filter(v=>ACTIVE_VEHICLE_STATUSES.includes(v.status)).reduce((sum,v)=>sum+Number(v.crew||0),0);
+}
+function platoonPersonnel(p){
+  if(!ACTIVE_PLATOON_STATUSES.includes(p.status))return 0;
+  return platoonVehicleCrew(p)+Number(p.extraPersonnel||0);
+}
+function platoonVehicleCount(p){
+  if(!ACTIVE_PLATOON_STATUSES.includes(p.status))return 0;
+  return (p.vehicleUnits||[]).filter(v=>ACTIVE_VEHICLE_STATUSES.includes(v.status)).length;
+}
+function allPlatoonCallsigns(){
+  return pcState.platoons.flatMap(p=>(p.vehicleUnits||[]).filter(v=>ACTIVE_VEHICLE_STATUSES.includes(v.status)).map(v=>v.callsign));
+}
+window.getPlatoonPersonnelSummary=()=>({
+  personnel:pcState.platoons.reduce((s,p)=>s+platoonPersonnel(p),0),
+  vehicles:pcState.platoons.reduce((s,p)=>s+platoonVehicleCount(p),0),
+  callsigns:allPlatoonCallsigns()
+});
+window.getPlatoonReliefStats=()=>{
+  const now=Date.now();let within60=0,unplanned=0;
+  pcState.platoons.forEach(p=>(p.vehicleUnits||[]).filter(v=>ACTIVE_VEHICLE_STATUSES.includes(v.status)).forEach(v=>{
+    const next=(v.reliefs||[]).slice().sort((a,b)=>new Date(a.time)-new Date(b.time))[0];
+    if(next){const d=new Date(next.time)-now;if(d>=0&&d<=3600000)within60++;}
+    else if(v.startTime&&hoursSince(v.startTime)>=3)unplanned++;
+  }));
+  return {within60,unplanned};
+};
+
+function vehicleCategory(type=''){
+  const t=type.toLowerCase();
+  if(t.includes('tankautospuit')&&t.includes('natuur'))return 'natureTs';
+  if(t.includes('tankautospuit'))return 'ts';
+  if(/watertank|watertransport|wts|dompelpomp|bronpomp/.test(t))return 'water';
+  if(/logistiek|verzorg|haakarm|brandstof|personeel\/materiaal/.test(t))return 'logistics';
+  if(/gevaarlijke|ontsmet|ibgs|gaspak/.test(t))return 'ibgs';
+  if(/hulpverlening|redding|waterongevallen|brandweervaartuig|hoogwerker/.test(t))return 'rescue';
+  return 'other';
+}
+function compositionCheck(p){
+  const def=PLATOON_TYPES[p.platoonType]||PLATOON_TYPES['Maatwerk'];
+  const counts={};
+  (p.vehicleUnits||[]).forEach(v=>{const c=vehicleCategory(v.type);counts[c]=(counts[c]||0)+1;});
+  const missing=Object.entries(def.expect||{}).filter(([k,n])=>(counts[k]||0)<n).map(([k,n])=>`${k}: ${counts[k]||0}/${n}`);
+  return {ok:missing.length===0,text:missing.length?`Samenstelling nog niet compleet: ${missing.join(', ')}`:`Samenstelling past bij ${p.platoonType}.`};
+}
+
+function fillPlatoonPostSelects(){
+  const opts='<option value="">Kies post</option>'+Object.keys(VEHICLES).sort((a,b)=>a.localeCompare(b,'nl')).map(p=>`<option>${pcEsc(p)}</option>`).join('');
+  document.getElementById('pvPost').innerHTML=opts;
+  document.getElementById('prPost').innerHTML=opts;
+}
+function togglePlatoonVehicleSource(){
+  const source=document.querySelector('input[name="pvSource"]:checked')?.value||'VGGM';
+  document.getElementById('pvPostWrap').classList.toggle('hidden',source!=='VGGM');
+  document.getElementById('pvVehicleWrap').classList.toggle('hidden',source!=='VGGM');
+  document.getElementById('pvExternalRegionWrap').classList.toggle('hidden',source==='VGGM');
+  document.getElementById('pvExternalCallsignWrap').classList.toggle('hidden',source==='VGGM');
+}
+window.togglePlatoonVehicleSource=togglePlatoonVehicleSource;
+function fillPlatoonVehicleOptions(){
+  const post=document.getElementById('pvPost').value;
+  document.getElementById('pvVehicle').innerHTML='<option value="">Kies voertuig</option>'+(VEHICLES[post]||[]).map(v=>`<option value="${pcEsc(v.number)}" data-type="${pcEsc(v.type)}">${pcEsc(v.number)} • ${pcEsc(post)} • ${pcEsc(v.type)}</option>`).join('');
+}
+window.fillPlatoonVehicleOptions=fillPlatoonVehicleOptions;
+function defaultCrew(type=''){
+  const t=type.toLowerCase();
+  if(t.includes('tankautospuit'))return 6;
+  if(/hoogwerker|watertank|dienstauto|verkenningsvoertuig|first responder/.test(t))return 2;
+  if(/hulpverleningsvoertuig/.test(t))return 3;
+  if(/brandweervaartuig/.test(t))return 4;
+  return 2;
+}
+function applyPlatoonVehicleSelection(){
+  const opt=document.getElementById('pvVehicle').selectedOptions[0];
+  const type=opt?.dataset.type||'';
+  document.getElementById('pvType').value=type;
+  document.getElementById('pvCrew').value=defaultCrew(type);
+}
+window.applyPlatoonVehicleSelection=applyPlatoonVehicleSelection;
+
+window.openPlatoonVehicle=(platoonId,vehicleId='')=>{
+  const p=pcState.platoons.find(x=>x.id===platoonId);if(!p)return;
+  const v=(p.vehicleUnits||[]).find(x=>x.id===vehicleId);
+  document.getElementById('pvPlatoonId').value=platoonId;
+  document.getElementById('pvVehicleId').value=vehicleId;
+  document.getElementById('platoonVehicleTitle').textContent=v?'Voertuig in peloton bewerken':'Voertuig aan peloton toevoegen';
+  document.querySelector('input[name="pvSource"][value="'+(v?.source||'VGGM')+'"]').checked=true;
+  togglePlatoonVehicleSource();
+  document.getElementById('pvPost').value=v?.post||'';
+  fillPlatoonVehicleOptions();
+  document.getElementById('pvVehicle').value=v?.callsign||'';
+  document.getElementById('pvExternalRegion').value=v?.sourceCode||'';
+  document.getElementById('pvExternalCallsign').value=v?.callsign||'';
+  document.getElementById('pvType').value=v?.type||'';
+  document.getElementById('pvCrew').value=v?.crew??6;
+  document.getElementById('pvStatus').value=v?.status||'Ingezet';
+  document.getElementById('pvStartTime').value=v?.startTime||nowInput();
+  document.getElementById('pvAssignment').value=v?.assignment||'';
+  document.getElementById('platoonVehicleDialog').showModal();
+};
+function savePlatoonVehicle(){
+  const p=pcState.platoons.find(x=>x.id===document.getElementById('pvPlatoonId').value);if(!p)return;
+  const vehicleId=document.getElementById('pvVehicleId').value;
+  const source=document.querySelector('input[name="pvSource"]:checked')?.value||'VGGM';
+  const post=source==='VGGM'?document.getElementById('pvPost').value:'';
+  const callsign=source==='VGGM'?document.getElementById('pvVehicle').value:document.getElementById('pvExternalCallsign').value.trim();
+  if(!callsign){alert('Kies of vul een voertuignummer in.');return;}
+  const data={
+    source,sourceCode:source==='VGGM'?'VGGM':document.getElementById('pvExternalRegion').value.trim(),
+    post,callsign,type:document.getElementById('pvType').value.trim(),
+    crew:Number(document.getElementById('pvCrew').value||0),status:document.getElementById('pvStatus').value,
+    startTime:document.getElementById('pvStartTime').value,assignment:document.getElementById('pvAssignment').value.trim()
+  };
+  p.vehicleUnits=p.vehicleUnits||[];
+  if(vehicleId){
+    const v=p.vehicleUnits.find(x=>x.id===vehicleId);const before=JSON.stringify(v);Object.assign(v,data);
+    addDiary(`${p.name}: voertuig gewijzigd ${before} → ${JSON.stringify(v)}`,'Pelotonvoertuig');
+  }else{
+    p.vehicleUnits.push({id:pcId(),reliefs:[],...data});
+    addDiary(`${p.name}: voertuig toegevoegd ${callsign} (${data.type})`,'Pelotonvoertuig');
+  }
+  pcSave();document.getElementById('platoonVehicleDialog').close();renderPcLog();if(typeof render==='function')render();
+}
+window.removePlatoonVehicle=(platoonId,vehicleId)=>{
+  const p=pcState.platoons.find(x=>x.id===platoonId);if(!p)return;
+  const v=(p.vehicleUnits||[]).find(x=>x.id===vehicleId);if(!v||!confirm('Voertuig uit peloton verwijderen?'))return;
+  p.vehicleUnits=p.vehicleUnits.filter(x=>x.id!==vehicleId);
+  addDiary(`${p.name}: voertuig verwijderd ${v.callsign}`,'Pelotonvoertuig');pcSave();renderPcLog();if(typeof render==='function')render();
+};
+
+function togglePlatoonReliefSource(){
+  const external=document.getElementById('prSource').value!=='VGGM';
+  document.getElementById('prPostWrap').classList.toggle('hidden',external);
+  document.getElementById('prVehicleWrap').classList.toggle('hidden',external);
+  document.getElementById('prExternalWrap').classList.toggle('hidden',!external);
+}
+window.togglePlatoonReliefSource=togglePlatoonReliefSource;
+function fillPlatoonReliefVehicles(){
+  const post=document.getElementById('prPost').value;
+  document.getElementById('prVehicle').innerHTML='<option value="">Kies voertuig</option>'+(VEHICLES[post]||[]).map(v=>`<option value="${pcEsc(v.number)}">${pcEsc(v.number)} • ${pcEsc(post)} • ${pcEsc(v.type)}</option>`).join('');
+}
+window.fillPlatoonReliefVehicles=fillPlatoonReliefVehicles;
+window.openPlatoonRelief=(platoonId,vehicleId)=>{
+  const p=pcState.platoons.find(x=>x.id===platoonId),v=(p?.vehicleUnits||[]).find(x=>x.id===vehicleId);if(!p||!v)return;
+  document.getElementById('prPlatoonId').value=platoonId;document.getElementById('prVehicleId').value=vehicleId;
+  document.getElementById('platoonReliefVehicleLabel').textContent=`${p.name} • ${v.callsign} • ${v.type}`;
+  document.getElementById('prSource').value='VGGM';togglePlatoonReliefSource();
+  document.getElementById('prPost').value='';fillPlatoonReliefVehicles();
+  document.getElementById('prExternal').value='';document.getElementById('prTime').value=nowInput();
+  document.getElementById('prCrew').value=v.crew||6;renderPlatoonReliefChain(p,v);
+  document.getElementById('platoonReliefDialog').showModal();
+};
+function renderPlatoonReliefChain(p,v){
+  document.getElementById('platoonReliefChain').innerHTML=(v.reliefs||[]).map((r,i)=>`<span class="relief-chip">${i+1}. ${pcEsc(r.unit||'Extern')} • ${r.time?new Date(r.time).toLocaleString('nl-NL'):'-'} <button onclick="removePlatoonRelief('${p.id}','${v.id}','${r.id}')">×</button></span>`).join('')||'<span class="small">Nog geen aflossing gepland.</span>';
+}
+function addPlatoonVehicleRelief(){
+  const p=pcState.platoons.find(x=>x.id===document.getElementById('prPlatoonId').value);
+  const v=(p?.vehicleUnits||[]).find(x=>x.id===document.getElementById('prVehicleId').value);if(!p||!v)return;
+  const source=document.getElementById('prSource').value,external=source!=='VGGM';
+  const unit=external?document.getElementById('prExternal').value.trim():document.getElementById('prVehicle').value;
+  const time=document.getElementById('prTime').value;if(!unit||!time){alert('Kies/vul een aflossende eenheid en tijd in.');return;}
+  v.reliefs=v.reliefs||[];v.reliefs.push({id:pcId(),source,post:external?'':document.getElementById('prPost').value,unit,time,kind:document.getElementById('prKind').value,crew:Number(document.getElementById('prCrew').value||0)});
+  v.status='Aflossing gepland';p.status='Aflossing gepland';
+  addDiary(`${p.name} / ${v.callsign}: aflossing ${unit} gepland op ${new Date(time).toLocaleString('nl-NL')}`,'Aflossing');
+  pcSave();renderPlatoonReliefChain(p,v);renderPcLog();if(typeof render==='function')render();
+}
+window.removePlatoonRelief=(platoonId,vehicleId,reliefId)=>{
+  const p=pcState.platoons.find(x=>x.id===platoonId),v=(p?.vehicleUnits||[]).find(x=>x.id===vehicleId);if(!v)return;
+  v.reliefs=(v.reliefs||[]).filter(r=>r.id!==reliefId);addDiary(`${p.name} / ${v.callsign}: aflossing verwijderd`,'Aflossing');pcSave();renderPlatoonReliefChain(p,v);renderPcLog();if(typeof render==='function')render();
+};
 
 function renderPcLog(){
   renderOperation();renderPlatoons();renderAir();renderRehab();renderWater();renderFoam();renderEquipment();
@@ -171,10 +374,17 @@ function renderAlerts(activeUnits){
   pcState.platoons.filter(p=>Number(p.water)<30).forEach(p=>alerts.push({level:'',text:`Water ${p.name} onder 30%.`}));
   pcState.platoons.filter(p=>Number(p.foam)<30).forEach(p=>alerts.push({level:'',text:`Schuim ${p.name} onder 30%.`}));
   pcState.platoons.filter(p=>p.rest==='Nee').forEach(p=>alerts.push({level:'info',text:`Voor ${p.name} is nog geen rustlocatie geregeld.`}));
+  pcState.platoons.forEach(p=>(p.vehicleUnits||[]).filter(v=>ACTIVE_VEHICLE_STATUSES.includes(v.status)).forEach(v=>{
+    const h=v.startTime?hoursSince(v.startTime):0;
+    if(h>=4)alerts.push({level:'danger',text:`${p.name} / ${v.callsign} is ${duration(h)} ingezet: aflossing noodzakelijk.`});
+    else if(h>=3&&!(v.reliefs||[]).length)alerts.push({level:'',text:`${p.name} / ${v.callsign} heeft na ${duration(h)} nog geen aflossing.`});
+  }));
   document.getElementById('autoAlerts').innerHTML=alerts.length?alerts.map(a=>`<div class="alertitem ${a.level}">${pcEsc(a.text)}</div>`).join(''):'<div class="listitem">Geen automatische waarschuwingen.</div>';
 }
 function renderScenario(activeUnits){
-  const personnel=activeUnits.reduce((s,u)=>s+Number(u.crew||0),0);
+  const platoonSummary=window.getPlatoonPersonnelSummary();
+  const platoonSet=new Set(platoonSummary.callsigns);
+  const personnel=activeUnits.filter(u=>!platoonSet.has(u.callsign)).reduce((s,u)=>s+Number(u.crew||0),0)+platoonSummary.personnel;
   const planned=activeUnits.filter(u=>(u.reliefs||[]).length).length;
   const fields=[['Incident',pcState.scenario.incident],['GRIP',pcState.scenario.grip],['Fase',pcState.scenario.phase],
     ['Pelotons',pcState.platoons.length],['Personeel',personnel],['Voertuigen',activeUnits.length],
@@ -245,20 +455,43 @@ function statusSelect(collection,item,statuses){
 
 /* pelotons */
 function renderPlatoons(){
-  document.getElementById('platoonCards').innerHTML=pcState.platoons.map(p=>`<article class="platoon-card">
-    <div class="cardhead"><div><strong>${pcEsc(p.name)}</strong><div class="small">${pcEsc(p.commander)} · ${pcEsc(p.sector)}</div></div>
-      <div class="pc-actions"><button class="edit-button" onclick="pcEdit('newPlatoon','platoons','${p.id}')">Bewerken</button><button class="danger" onclick="pcRemove('platoons','${p.id}')">Verwijder</button></div></div>
-    <div class="platoon-grid">
-      <div class="metric"><strong>Personeel</strong>${stepper('platoons',p.id,'personnel',p.personnel,1)}</div>
-      <div class="metric"><strong>Voertuigen</strong>${stepper('platoons',p.id,'vehicles',p.vehicles,1)}</div>
-      <div class="metric"><strong>Ademlucht</strong>${stepper('platoons',p.id,'air',p.air,10)}${pctBar(p.air)}</div>
-      <div class="metric"><strong>Water</strong>${stepper('platoons',p.id,'water',p.water,10)}${pctBar(p.water)}</div>
-      <div class="metric"><strong>Schuim</strong>${stepper('platoons',p.id,'foam',p.foam,10)}${pctBar(p.foam)}</div>
-      <div class="metric"><strong>Voeding</strong><select onchange="pcSetField('platoons','${p.id}','food',this.value)">${['Nee','Onderweg','Geregeld'].map(x=>`<option ${p.food===x?'selected':''}>${x}</option>`).join('')}</select></div>
-      <div class="metric"><strong>Rustlocatie</strong><select onchange="pcSetField('platoons','${p.id}','rest',this.value)">${['Nee','Geregeld','In gebruik'].map(x=>`<option ${p.rest===x?'selected':''}>${x}</option>`).join('')}</select></div>
-      <div class="metric"><strong>Sector</strong><select onchange="pcSetField('platoons','${p.id}','sector',this.value)">${['Onverdeeld','Noord','Oost','Zuid','West'].map(x=>`<option ${p.sector===x?'selected':''}>${x}</option>`).join('')}</select></div>
-    </div></article>`).join('')||'<div class="listitem">Nog geen pelotons geregistreerd.</div>';
+  const activePlatoons=pcState.platoons.filter(p=>ACTIVE_PLATOON_STATUSES.includes(p.status));
+  document.getElementById('platoonActiveCount').textContent=activePlatoons.length;
+  document.getElementById('platoonVehicleCount').textContent=activePlatoons.reduce((s,p)=>s+platoonVehicleCount(p),0);
+  document.getElementById('platoonPersonnelCount').textContent=activePlatoons.reduce((s,p)=>s+platoonPersonnel(p),0);
+  document.getElementById('platoonReliefCount').textContent=pcState.platoons.reduce((s,p)=>s+(p.vehicleUnits||[]).reduce((n,v)=>n+(v.reliefs||[]).length,0),0);
+
+  document.getElementById('platoonCards').innerHTML=pcState.platoons.map(p=>{
+    const check=compositionCheck(p);
+    const vehicleRows=(p.vehicleUnits||[]).map(v=>`<div class="platoon-vehicle-row">
+      <div><strong>${pcEsc(v.callsign)} • ${pcEsc(v.post||v.sourceCode||'Extern')}</strong><div class="small">${pcEsc(v.type)} · ${pcEsc(v.assignment||'')}</div><div class="relief-chain">${(v.reliefs||[]).map((r,i)=>`<span class="relief-chip">${i+1}. ${pcEsc(r.unit)} ${r.time?new Date(r.time).toLocaleString('nl-NL'):''}</span>`).join('')}</div></div>
+      <div><strong>${pcEsc(v.crew)}</strong><div class="small">personen</div></div>
+      <div><select onchange="setPlatoonVehicleStatus('${p.id}','${v.id}',this.value)">${['Onderweg','Ingezet','Aflossing gepland','Afgelost','Beschikbaar'].map(s=>`<option ${v.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div>${v.startTime?duration(hoursSince(v.startTime)):'-'}</div>
+      <div class="platoon-vehicle-actions"><button onclick="openPlatoonRelief('${p.id}','${v.id}')">Aflossing</button><button class="edit-button" onclick="openPlatoonVehicle('${p.id}','${v.id}')">Bewerken</button><button class="danger" onclick="removePlatoonVehicle('${p.id}','${v.id}')">×</button></div>
+    </div>`).join('')||'<div class="small">Nog geen voertuigen aan dit peloton gekoppeld.</div>';
+    return `<article class="platoon-card">
+      <div class="cardhead"><div><div class="platoon-headerline"><strong>${pcEsc(p.name)}</strong><span class="platoon-type-badge">${pcEsc(p.platoonType)}</span><span class="platoon-status-badge">${pcEsc(p.status)}</span></div><div class="small">${pcEsc(p.commander)} · ${pcEsc(p.sector)} · ${platoonPersonnel(p)} personen · ${platoonVehicleCount(p)} voertuigen</div></div>
+        <div class="pc-actions"><button onclick="openPlatoonVehicle('${p.id}')">Voertuig toevoegen</button><button class="edit-button" onclick="pcEdit('newPlatoon','platoons','${p.id}')">Peloton bewerken</button><button class="danger" onclick="pcRemove('platoons','${p.id}')">Verwijder</button></div></div>
+      <div class="composition-check ${check.ok?'':'warn'}">${pcEsc(PLATOON_TYPES[p.platoonType]?.description||'')}<br>${pcEsc(check.text)}</div>
+      <div class="platoon-grid">
+        <div class="metric"><strong>Personeel uit voertuigen</strong>${platoonVehicleCrew(p)}</div>
+        <div class="metric"><strong>Extra personeel</strong>${stepper('platoons',p.id,'extraPersonnel',p.extraPersonnel,1)}</div>
+        <div class="metric"><strong>Totaal ingezet</strong>${platoonPersonnel(p)}</div>
+        <div class="metric"><strong>Voertuigen actief</strong>${platoonVehicleCount(p)}</div>
+        <div class="metric"><strong>Ademlucht</strong>${stepper('platoons',p.id,'air',p.air,10)}${pctBar(p.air)}</div>
+        <div class="metric"><strong>Water</strong>${stepper('platoons',p.id,'water',p.water,10)}${pctBar(p.water)}</div>
+        <div class="metric"><strong>Schuim</strong>${stepper('platoons',p.id,'foam',p.foam,10)}${pctBar(p.foam)}</div>
+        <div class="metric"><strong>Sector</strong><select onchange="pcSetField('platoons','${p.id}','sector',this.value)">${['Onverdeeld','Noord','Oost','Zuid','West'].map(x=>`<option ${p.sector===x?'selected':''}>${x}</option>`).join('')}</select></div>
+      </div>
+      <div class="platoon-vehicles"><h4>Voertuigen en aflossing per voertuig</h4>${vehicleRows}</div>
+    </article>`;
+  }).join('')||'<div class="listitem">Nog geen pelotons geregistreerd.</div>';
 }
+window.setPlatoonVehicleStatus=(platoonId,vehicleId,status)=>{
+  const p=pcState.platoons.find(x=>x.id===platoonId),v=(p?.vehicleUnits||[]).find(x=>x.id===vehicleId);if(!v)return;
+  const old=v.status;v.status=status;addDiary(`${p.name} / ${v.callsign}: status ${old} → ${status}`,'Pelotonvoertuig');pcSave();renderPcLog();if(typeof render==='function')render();
+};
 function renderSectorBoard(){
   const sectors=['Onverdeeld','Noord','Oost','Zuid','West'];
   document.getElementById('sectorBoard').innerHTML=sectors.map(sector=>`<div class="sector-column" data-sector="${sector}" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="dropPlatoon(event,'${sector}')"><h4>${sector}</h4>${pcState.platoons.filter(p=>(p.sector||'Onverdeeld')===sector).map(p=>`<div class="sector-card" draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${p.id}')"><strong>${pcEsc(p.name)}</strong><br>${pcEsc(p.commander)}</div>`).join('')}</div>`).join('');

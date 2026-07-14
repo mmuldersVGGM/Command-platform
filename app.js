@@ -37,7 +37,7 @@ function active(u){return ['Onderweg','Ingezet','Aflossing gepland'].includes(u.
 function hoursSince(s){return s?Math.max(0,(Date.now()-new Date(s))/3600000):0;}
 function duration(h){const m=Math.floor(h*60);return `${Math.floor(m/60)}u ${m%60}m`;}
 
-const APP_VERSION='26.0.0';
+const APP_VERSION='27.0.0';
 
 function initRoleMode(){
   const saved=localStorage.getItem('cp_role_mode')||'ALL';
@@ -247,16 +247,30 @@ function renderPostInfo(){
 }
 
 function renderDashboard(){
-  const a=state.units.filter(active), now=Date.now();
-  $('statActive').textContent=a.length;
-  $('statStaff').textContent=a.reduce((s,u)=>s+Number(u.crew||0),0);
+  const activeStandalone=state.units.filter(active);
+  const platoonSummary=(typeof window.getPlatoonPersonnelSummary==='function')
+    ? window.getPlatoonPersonnelSummary()
+    : {personnel:0,vehicles:0,callsigns:[]};
+  const platoonCallsigns=new Set(platoonSummary.callsigns||[]);
+  const looseUnits=activeStandalone.filter(u=>!platoonCallsigns.has(u.callsign));
+  const loosePersonnel=looseUnits.reduce((s,u)=>s+Number(u.crew||0),0);
+
+  $('statActive').textContent=looseUnits.length+Number(platoonSummary.vehicles||0);
+  $('statStaff').textContent=loosePersonnel+Number(platoonSummary.personnel||0);
+
+  const now=Date.now();
   let r60=0,unplanned=0;
-  a.forEach(u=>{
+  activeStandalone.forEach(u=>{
     const next=(u.reliefs||[]).slice().sort((x,y)=>new Date(x.time)-new Date(y.time))[0];
     if(next){const d=new Date(next.time)-now;if(d>=0&&d<=3600000)r60++;}
     else if(hoursSince(u.startTime)>=3)unplanned++;
   });
-  $('statRelief60').textContent=r60; $('statUnplanned').textContent=unplanned;
+  if(typeof window.getPlatoonReliefStats==='function'){
+    const ps=window.getPlatoonReliefStats();
+    r60+=ps.within60;unplanned+=ps.unplanned;
+  }
+  $('statRelief60').textContent=r60;
+  $('statUnplanned').textContent=unplanned;
 }
 function renderTimeline(){
   const start=Date.now()-6*3600000,end=Date.now()+12*3600000,total=end-start;

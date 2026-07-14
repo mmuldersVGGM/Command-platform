@@ -1,17 +1,14 @@
-COMMAND PLATFORM v26
+COMMAND PLATFORM v27
 
-Upload ALLE bestanden naar de hoofdmap van de GitHub-repository.
-Bestaande bestanden mogen worden overschreven.
+Nieuw:
+- soort peloton
+- voertuignummers per peloton
+- bezetting per voertuig
+- aflossingsketen per voertuig
+- totaal personeel = losse actieve eenheden + actieve pelotonvoertuigen + extra pelotonpersoneel
+- dubbele voertuignummers worden niet dubbel meegeteld wanneer ze zowel los als in een peloton staan
 
-Nieuw bestand:
-- version.json
+Upload ALLE bestanden naar de hoofdmap van GitHub en overschrijf de bestaande bestanden.
+Klik Commit changes, wacht op het groene vinkje bij Actions en gebruik daarna 'Controleer update'.
 
-Belangrijk:
-- upload ook pc-log.js
-- klik Commit changes
-- wacht bij Actions op groen vinkje
-- open de bestaande app; opnieuw installeren is niet nodig
-- klik in de app op 'Controleer update' of vernieuw met Ctrl+F5
-
-Deze GitHub Pages-versie blijft een openbare testomgeving.
-Gebruik geen echte operationele of persoonsgegevens.
+Let op: deze openbare GitHub Pages-omgeving blijft uitsluitend voor fictieve/geanonimiseerde testgegevens.
