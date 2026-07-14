@@ -37,7 +37,7 @@ function active(u){return ['Onderweg','Ingezet','Aflossing gepland'].includes(u.
 function hoursSince(s){return s?Math.max(0,(Date.now()-new Date(s))/3600000):0;}
 function duration(h){const m=Math.floor(h*60);return `${Math.floor(m/60)}u ${m%60}m`;}
 
-const APP_VERSION='31.0.0';
+const APP_VERSION='32.0.0';
 
 function initRoleMode(){
   const saved=localStorage.getItem('cp_role_mode')||'ALL';
@@ -143,6 +143,8 @@ function bind(){
   $('clearAll').onclick=clearAll;
   $('clearMap').onclick=()=>{state.selectedPost='';$('post').value='';renderMarkers();renderPostInfo();};
   document.querySelectorAll('.coverage-filter').forEach(btn=>btn.onclick=()=>setCoverageFilter(btn.dataset.coverageFilter));
+  document.querySelectorAll('[data-rail-area]').forEach(btn=>btn.onclick=()=>selectCoverageArea(btn.dataset.railArea));
+  document.querySelectorAll('[data-jump]').forEach(btn=>btn.onclick=()=>$(btn.dataset.jump)?.scrollIntoView({behavior:'smooth'}));
   document.querySelectorAll('.coverage-region').forEach(region=>{
     region.onclick=()=>openCoverageArea(region.dataset.area);
     region.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openCoverageArea(region.dataset.area);}};
@@ -345,6 +347,7 @@ function resetForm(){
 
 
 let coverageFilter='ALL';
+let selectedCoverageArea='';
 
 function setCoverageFilter(filter){
   coverageFilter=filter;
@@ -407,52 +410,70 @@ function renderCoverageRegions(){
     btn.setAttribute('tabindex','0');
     btn.setAttribute('role','button');
   });
+  updateCoverageRail();
+  if(selectedCoverageArea)renderSideArea(selectedCoverageArea);
 }
 function coverageVehicleCard(v,unit=null){
   const status=unit?unit.status:'Beschikbaar';
   const assignment=unit?.assignment||'';
   return `<div class="coverage-unit-card"><strong>${esc(v.number)} • ${esc(v.post)}</strong>${esc(v.type)}<br><span class="small">${esc(status)}${assignment?' · '+esc(assignment):''}</span>${unit?`<button onclick="jumpToCoverageUnit('${unit.id}')">Open eenheid</button>`:''}</div>`;
 }
-function openCoverageArea(area){
+function statusText(status){
+  return {good:'Voldoende',limited:'Beperkt',critical:'Kritiek',flash:'Onder minimum'}[status]||status;
+}
+function railId(area,suffix){return `rail${suffix}${area}`;}
+function updateCoverageRail(){
+  ['Noord','Midden','Zuidoost','Zuidwest'].forEach(area=>{
+    const data=coverageScore(area);
+    const pct=Math.round(data.ratio*100);
+    const card=document.querySelector(`[data-rail-area="${area}"]`);
+    if(card){
+      card.classList.remove('good','limited','critical','flash','selected');
+      card.classList.add(data.status);
+      card.classList.toggle('selected',selectedCoverageArea===area);
+    }
+    const pctEl=$(railId(area,'Pct')),statusEl=$(railId(area,'Status')),barEl=$(railId(area,'Bar'));
+    if(pctEl)pctEl.textContent=`${pct}%`;
+    if(statusEl)statusEl.textContent=statusText(data.status);
+    if(barEl)barEl.style.width=`${pct}%`;
+  });
+}
+function selectCoverageArea(area){
+  selectedCoverageArea=area;
+  updateCoverageRail();
+  renderSideArea(area);
+}
+function renderSideArea(area){
   const data=coverageScore(area);
-  const dialog=$('coverageDialog');
-  $('coverageDialogTitle').textContent=area;
-  const filterLabels={ALL:'alle operationele slagkracht',TS:'tankautospuiten',HEIGHT:'hoogteredding',WATER:'waterlogistiek',SPECIAL:'specialismen'};
-  $('coverageDialogSubtitle').textContent=`Restdekking voor ${filterLabels[coverageFilter]}.`;
-  const badge=$('coverageDialogStatus');
-  badge.className=`coverage-status-badge ${data.status}`;
-  badge.textContent={good:'Voldoende',limited:'Beperkt',critical:'Kritiek',flash:'Onder minimum'}[data.status];
-
   const activeMap=data.activeMap;
   const deployed=data.fleet.filter(v=>activeMap.has(v.number));
-  const activeUnits=deployed.map(v=>({vehicle:v,unit:activeMap.get(v.number)}));
-
-  const categories=['TS','HEIGHT','WATER','SPECIAL'];
-  const categoryLabels={TS:'TS',HEIGHT:'Hoogte',WATER:'Water',SPECIAL:'Specialismen'};
-  $('coverageSummaryCards').innerHTML=categories.map(cat=>{
-    const all=areaFleet(area).filter(v=>v.category===cat);
-    const free=all.filter(v=>!activeMap.has(v.number)).length;
-    return `<div><span>${categoryLabels[cat]}</span><strong>${free}</strong><div class="small">van ${all.length} vrij</div></div>`;
-  }).join('');
-
-  $('coverageAvailable').innerHTML=data.available.length
-    ? data.available.map(v=>coverageVehicleCard(v)).join('')
-    : '<div class="coverage-unit-card">Geen voertuigen beschikbaar binnen dit filter.</div>';
-
-  $('coverageDeployed').innerHTML=activeUnits.length
-    ? activeUnits.map(x=>coverageVehicleCard(x.vehicle,x.unit)).join('')
-    : '<div class="coverage-unit-card">Geen ingezette of onderweg zijnde voertuigen.</div>';
-
+  const deployedUnits=deployed.map(v=>({vehicle:v,unit:activeMap.get(v.number)}));
+  const enroute=deployedUnits.filter(x=>x.unit.status==='Onderweg').length;
+  const personnel=deployedUnits.reduce((s,x)=>s+Number(x.unit.crew||0),0);
   let platoons=[];
-  if(window.PCLOG && typeof window.PCLOG.getPlatoonsForArea==='function'){
-    platoons=window.PCLOG.getPlatoonsForArea(area);
-  }
-  $('coveragePlatoons').innerHTML=platoons.length
-    ? platoons.map(p=>`<div class="coverage-unit-card"><strong>${esc(p.name)} • ${esc(p.platoonType)}</strong>${p.units} eenheden uit ${esc(area)}<br><span class="small">${esc(p.status)} · ${esc(p.sector||'')}</span></div>`).join('')
-    : '<div class="coverage-unit-card">Geen gekoppelde pelotons met eenheden uit dit gebied.</div>';
+  if(window.PCLOG && typeof window.PCLOG.getPlatoonsForArea==='function')platoons=window.PCLOG.getPlatoonsForArea(area);
 
-  dialog.showModal();
+  $('sideAreaTitle').textContent=area;
+  $('sideAreaSubtitle').textContent=`Restdekking voor ${coverageFilter==='ALL'?'alle operationele slagkracht':coverageFilter}.`;
+  const badge=$('sideAreaBadge');
+  badge.textContent=statusText(data.status);
+  badge.className=`side-status ${data.status}`;
+  $('sideTotal').textContent=data.total;
+  $('sideAvailable').textContent=data.free;
+  $('sideDeployed').textContent=deployedUnits.length;
+  $('sideEnroute').textContent=enroute;
+  $('sidePlatoons').textContent=platoons.length;
+  $('sidePersonnel').textContent=personnel;
+
+  $('sideAvailableUnits').innerHTML=data.available.length
+    ? data.available.slice(0,12).map(v=>`<button class="side-unit-card" onclick="selectPost('${esc(v.post)}')"><strong>${esc(v.number)}</strong><span>${esc(v.post)}</span><small>${esc(v.type)}</small></button>`).join('')
+    : '<p>Geen beschikbare eenheden binnen dit filter.</p>';
+
+  $('sideDeployedUnits').innerHTML=deployedUnits.length
+    ? deployedUnits.slice(0,12).map(x=>`<button class="side-unit-card deployed" onclick="jumpToCoverageUnit('${x.unit.id}')"><strong>${esc(x.vehicle.number)}</strong><span>${esc(x.vehicle.post)}</span><small>${esc(x.unit.status)} · ${esc(x.unit.assignment||'')}</small></button>`).join('')
+    : '<p>Geen ingezette of onderweg zijnde eenheden.</p>';
 }
+function openCoverageArea(area){selectCoverageArea(area);}
 window.jumpToCoverageUnit=unitId=>{
   $('coverageDialog').close();
   $('overview')?.scrollIntoView({behavior:'smooth'});
@@ -515,6 +536,9 @@ function renderDashboard(){
   });
   $('statRelief60').textContent=r60;
   $('statUnplanned').textContent=unplanned;
+  const activePlatoons=(window.PCLOG && typeof window.PCLOG.getActivePlatoonCount==='function')
+    ? window.PCLOG.getActivePlatoonCount() : 0;
+  if($('statPlatoons'))$('statPlatoons').textContent=activePlatoons;
 }
 function renderTimeline(){
   const start=Date.now()-6*3600000,end=Date.now()+12*3600000,total=end-start;

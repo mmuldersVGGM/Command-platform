@@ -1,15 +1,12 @@
-COMMAND PLATFORM v31 – PROFESSIONAL UI
+COMMAND PLATFORM v32 – NIEUWE HOOFDVERSIE
 
-Deze versie is een visuele herontwikkeling van de bestaande applicatie.
-Er zijn bewust geen nieuwe operationele functies toegevoegd.
-
-Aangepast:
-- consistente donkerblauwe stijl in alle onderdelen;
-- formulieren, eenheden, pelotons, logistiek, CoPI, tijdlijn en dialoogvensters in dezelfde stijl;
-- geen pictogrammen in koppen of formulieren;
-- statuskleuren groen, oranje, rood, blauw en paars;
-- restdekkingskleuren blijven binnen de contour van het werkgebied;
-- bestaande workflow en functionaliteiten blijven intact.
+Nieuwe hoofdindeling:
+- links een vaste restdekkingskolom;
+- centraal de operationele kaart;
+- rechts een vast gebieds- en eenhedenpaneel;
+- tijdlijn direct onder de kaart;
+- lichtere kleuren dan v31;
+- bestaande formulieren en operationele functies blijven behouden.
 
 Upload alle bestanden naar de hoofdmap van GitHub en overschrijf de bestaande bestanden.
-Klik Commit changes, wacht op het groene vinkje bij Actions en open daarna reset-cache.html.
+Klik Commit changes, wacht op groen vinkje bij Actions en open daarna reset-cache.html.

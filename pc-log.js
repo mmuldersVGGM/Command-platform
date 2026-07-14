@@ -128,7 +128,10 @@ function getPlatoonsForArea(area){
     return {name:p.name,platoonType:p.platoonType,status:p.status,sector:p.sector,units:units.length};
   }).filter(p=>p.units>0);
 }
-window.PCLOG={addDiary,getPlatoonForUnit,getExtraPlatoonPersonnel,getPlatoonByNumber,populateDeploymentPlatoons,assignUnitToPlatoonNumber,getPlatoonsForArea};
+function getActivePlatoonCount(){
+  return pcState.platoons.filter(p=>!['Afgelost','Beschikbaar'].includes(p.status)).length;
+}
+window.PCLOG={addDiary,getPlatoonForUnit,getExtraPlatoonPersonnel,getPlatoonByNumber,populateDeploymentPlatoons,assignUnitToPlatoonNumber,getPlatoonsForArea,getActivePlatoonCount};
 
 function migrateOldEmbeddedVehicles(){
   let migrated=0;
